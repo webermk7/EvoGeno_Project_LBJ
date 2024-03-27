@@ -1,0 +1,42 @@
+---
+title: "Lab10_James"
+author: "James Forster III"
+date: "2024-03-27"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+    theme: cerulean 
+    highlight: monochrome
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(knitr)
+library(DT)
+```
+
+```{r}
+Project_MAGs <- read.csv("Project_MAGs.csv") 
+```
+
+```{r}
+Project_MAGs_LBJ <- Project_MAGs %>% 
+  filter(Site == "National Grasslands LBJ, Texas, USA")
+```
+
+```{r, fig.width = 12, fig.height = 5}
+Project_MAGs_LBJ %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Phylum)))) +
+    geom_bar() +
+    labs(title = "Phylum Counts for MAGs at National Grasslands LBJ, Texas, USA", x = "Phylum", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 60, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 15),
+                        text = element_text(size = 17))
+```
+
