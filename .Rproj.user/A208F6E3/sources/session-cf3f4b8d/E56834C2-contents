@@ -1,0 +1,32 @@
+---
+title: "Actinobacteria"
+author: "Jay English"
+date: "2024-03-27"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+# Actinobacteria
+
+<center>
+
+![Scanning Electrom Micrograph of Actinomyes israelii](Actinobacteria.jpg)
+<center>
+
+Find details about environment, associated diseases, environmental impact, etc.
+
+Actinobacteria are diverse, gram positive bacteria found in both aquatic and terrestrial environments(@Servin 2008).
+
+
+
+# Analysis
+
+```{r}
+Project_MAGs <- read.csv("Project_MAGs.csv")
+```
+
