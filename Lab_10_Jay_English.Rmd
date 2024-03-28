@@ -20,13 +20,165 @@ output:
 
 Find details about environment, associated diseases, environmental impact, etc.
 
-Actinobacteria are diverse, gram positive bacteria found in both aquatic and terrestrial environments(@Servin 2008).
+Actinobacteria are diverse, gram positive bacteria found in both aquatic and terrestrial environments(@Servin 2008). In soil, they are decomposers of organic matter and play a key role in the carbon cycle. This niche is likely distinct from decomposers such as fungi, as they often form symbiotic relationships with plants as nitrogen fixers(@Kakoi).
 
+Interestingly, for a long time Actinomycetota colonies were believed to be fungi as they form extensive mycelia. This is how they were actually named (myc being derived from the Greek "myket" for "mushroom")(@Buchanan). 
 
+Certain Actinomycetota are important members of the human microbiome. In fact, the genus Bifidobacterium are the most common bacteria in the human infant microbiome(@Turroni). In the intestines, bifidobacteria help maintain the mucosal barrier and play a key role in reduction of inflammation by reducing lipopolysacharides in the GI tract(@Pinzone).
+
+Actinobacteria are also relevant to human disease. Some members of the genus Mycobacterium, for instance, are pathogenic and are the cause of diseases such as tuberculosis, leprosy, diptheria, vaginosis, and others(@Lewin). Still others from the genus Steptomyces are a major source of common antibiotics used in medicine(@Emerson).
 
 # Analysis
 
+
+## Actinobacterioda abundance at each site
+
 ```{r}
+
+library(tidyverse)
+library(knitr)
+library(DT)
+library(plotly)
+library(scales)
+library(ggeasy)
+
+# Load the MAGs table
 Project_MAGs <- read.csv("Project_MAGs.csv")
+
+# Filter all other classes besides ours
+actino <- Project_MAGs %>% 
+  filter(Phylum == "Actinobacteriota")
+
+#Make a bar plot of the basic counts of Actinobacteria per site
+
+actino %>% 
+  count(Site) %>% 
+  ggplot(aes(x = reorder(Site, n), y = n)) +
+  geom_col(stat = "identity", fill = "blue") +
+  xlab("Site") +
+  ylab("Count") +
+  labs(xolour = "darkblue", size = 10) +
+  theme(axis.text.x = element_text(colour = "darkblue", size = 10)) +
+  theme(axis.title = element_text(colour = "darkblue")) +
+  theme(axis.text.y = element_text(colour = "darkblue", size = 10)) +
+  theme(axis.text.y = element_text(size = 4)) +
+  scale_x_discrete(labels = wrap_format(25)) +
+  theme(axis.text.x = element_text(size = 8)) +
+  scale_y_continuous(n.breaks = 12) +
+  coord_flip()
+
 ```
 
+## Actinobacterioda Classes at each site
+
+```{r}
+actino %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Site)), fill = Class)) +
+  geom_bar(position = position_dodge2(width = 0.5, preserve = "single")) +
+ theme(legend.position = "bottom") +
+  theme(legend.justification = "left") +
+  theme(legend.key.size = unit( 0.1, 'cm')) +
+  theme(legend.key.height = unit(0.1, 'cm')) +
+  theme(legend.key.width = unit(0.1, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 4, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 4)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(10, 10, 10, 10)) +
+  theme(legend.box.just = "left") +
+  theme( axis.text.x = element_text(size = 6)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_x_discrete(labels = wrap_format(50)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 3)) +
+  xlab("Site") +
+  ylab("Count") +
+  labs(title = str_wrap("Number of Actinobateriota Classes at each Site", width = 30)) +
+  ggeasy::easy_center_title() +
+  coord_flip()
+```
+
+## Actinobacterioda genera at each site
+
+```{r}
+actino %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Site)), fill = Genus)) +
+  geom_bar(position = position_dodge2(width = 0.5, preserve = "single")) +
+  guides(fill = guide_legend(ncol = 3)) +
+  theme(legend.justification = "top") +
+  theme(legend.position = "left") +
+  theme(legend.key.size = unit( 0.1, 'cm')) +
+  theme(legend.key.height = unit(0.1, 'cm')) +
+  theme(legend.key.width = unit(0.1, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 2, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 2)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(4, 4, 4, 4)) +
+  theme(legend.box.just = "left") +
+  theme( axis.text.x = element_text(size = 4, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  theme(axis.title = element_text(size = 5)) +
+  theme(axis.text.y = element_text(size = 4)) +
+  scale_x_discrete(labels = wrap_format(40)) +
+  scale_y_continuous(limits = c(0, 20)) +
+  xlab("Site") +
+  ylab("Count") +
+  labs(title = str_wrap("Actinobateriota Genera at each Site", width = 30)) +
+  ggeasy::easy_plot_title_size(size = 8) +
+  ggeasy::easy_center_title()
+```
+
+## Pathogens
+
+Which of these sites have some nasty pathogenic Actinobacteria?
+
+```{r}
+# Filter for serious pathogenic genera
+
+actino %>% 
+  filter(Genus == "Mycobacterium") %>% 
+  count(Site) %>% 
+  ggplot(aes(x = reorder(Site, n), y = n)) +
+  geom_col(stat = "identity", fill = "red") +
+  xlab("Site") +
+  ylab("Count") +
+  labs(colour = "darkred", size = 10) +
+  theme(axis.text.x = element_text(colour = "darkred", size = 10)) +
+  theme(axis.title = element_text(colour = "darkred")) +
+  theme(axis.text.y = element_text(colour = "darkred", size = 10)) +
+  theme(axis.text.y = element_text(size = 4)) +
+  scale_x_discrete(labels = wrap_format(25)) +
+  theme(axis.text.x = element_text(size = 8)) +
+  scale_y_continuous(limits = c(0, 20)) +
+  labs(title = str_wrap("Mycobacterium tuberculosis Counts at each Site", width = 30)) +
+  ggeasy::easy_all_text_color("darkred") +
+  ggeasy::easy_center_title() +
+  coord_flip()
+
+  
+```
+
+## Were these reads high quality?
+
+```{r}
+quality <- 
+  actino %>% 
+  filter(Genus == "Mycobacterium") %>% 
+  count(`Bin.Quality`, sort = TRUE)
+
+datatable(quality)
+```
+
+So we see only two were really high quality reads. Let's see which they were.
+
+```{r}
+
+quality <- 
+  actino %>% 
+  filter(Genus == "Mycobacterium") %>% 
+  select(c(`Site`, `Sample.Name`, `Subplot`, `Date`, `Bin.Quality`)) %>% 
+  filter(Bin.Quality == "HQ")
+
+datatable(quality)
+```
+
+So maybe wash your hands in Watershed, Alaska.
