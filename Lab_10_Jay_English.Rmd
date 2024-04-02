@@ -29,9 +29,9 @@ library(ggeasy)
 <center>
 
 
-Long through history, the lands that would become the LBJ National Grasslands were favorite hunting grounds for native tribes such as the Cherokee, Creek, Seminole, Waco, and Kickapood [@dferriero_importance_2021]. In fact, the earliest discovered human artifacts in North America, namely remains of animals, seeds, and various others were discovered not far from this region [@noauthor_fort_nodate;@noauthor_human_2023].
+Long through history, the lands that would become the LBJ National Grasslands were favorite hunting grounds for native tribes such as the Cherokee, Creek, Seminole, Waco, and Kickapood [@dferriero_importance_2021]. In fact, the earliest discovered human artifacts in North America, namely remains of animals, seeds, and various others were discovered not far from this region [@noauthor_fort_nodate; @noauthor_human_2023].
 
-In the 1700s and 1800s, the Comanche commanded this region after aquiring horses and beginning a nomadic war tribe-like lifestyle [noauthor_fort_nodate;@association_comanche_nodate]. In 1843, negotiations between these and other tribes with the likes of Sam Houston's deligate generals, Edward J. Tarrant and George W. Terrell saw the natives relocated to territory west of a line through the future site of Fort Worth, giving this town its famous slogan "Where the West Begins"... Not because of its cowboy culture, but rather because this is what the line was referred to as. The second president of Texas, Mirabeau Lamar, did not recognize these treaties for peace, and called for the "total extinction or total repulsion" of the natives as white settlement in the region expanded [noauthor_human_2023;@noauthor_native_nodate].
+In the 1700s and 1800s, the Comanche commanded this region after aquiring horses and beginning a nomadic war tribe-like lifestyle [noauthor_fort_nodate; @association_comanche_nodate]. In 1843, negotiations between these and other tribes with the likes of Sam Houston's deligate generals, Edward J. Tarrant and George W. Terrell saw the natives relocated to territory west of a line through the future site of Fort Worth, giving this town its famous slogan "Where the West Begins"... Not because of its cowboy culture, but rather because this is what the line was referred to as. The second president of Texas, Mirabeau Lamar, did not recognize these treaties for peace, and called for the "total extinction or total repulsion" of the natives as white settlement in the region expanded [noauthor_human_2023; @noauthor_native_nodate].
 
 Ranching has always been historically associated with Texas, and Fort Worth was home to some of the largest cattle trades in the world. Ranchers would drive their cattle from throughout the Great Plains to be sold or traded at the Fort Worth stockyard [@noauthor_home_nodate].
 
@@ -98,20 +98,7 @@ datatable(Project_MAGs_LBJ)
 ```
 
 
-## Abundance of Actinobacteriota at NEON Sites 
 
-```{r, fig.width = 9, fig.height = 5}
-Project_MAGs %>%
-  filter(Phylum == "Actinobacteriota") %>%
-  filter(Site != "NEON combined assembly") %>% 
-ggplot(aes(x = fct_rev(fct_infreq(Site)))) +
-    geom_bar(color = "cyan") +
-    labs(title = "Abundance of Actinobacteriota at NEON Sites", x = "Site", y = "Number of MAGs") +
-theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
-                        axis.text.y = element_text(size = 12),
-                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
-  coord_flip() 
-```
 
 # Exercise 4
 
@@ -153,7 +140,6 @@ Actinobacteria are also relevant to human disease. Some members of the genus Myc
 ## Actinobacterioda abundance at each site
 
 ```{r}
-
 # Load the MAGs table
 Project_MAGs <- read.csv("Project_MAGs.csv")
 
@@ -178,10 +164,13 @@ actino %>%
   theme(axis.text.x = element_text(size = 8)) +
   scale_y_continuous(n.breaks = 12) +
   coord_flip()
-
 ```
 
-## Actinobacterioda Classes at each site
+Interestingly, actinobacteriota is found most predominantly at National Grasslands LBJ, our site! We can also take a look and see some of the lower level taxonomic breakdown of these actinobacteriota: 
+
+### Taxonomic Breakdown of Actinobacteriota at Sites
+
+#### Class
 
 ```{r}
 actino %>% 
@@ -206,10 +195,41 @@ ggplot(aes(x = fct_rev(fct_infreq(Site)), fill = Class)) +
   ylab("Count") +
   labs(title = str_wrap("Number of Actinobateriota Classes at each Site", width = 30)) +
   ggeasy::easy_center_title() +
-  coord_flip()
+  coord_flip() 
 ```
 
-## Actinobacterioda genera at each site
+#### Order
+
+```{r, fig.width = 13, fig.height = 5}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Order)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Order (Colored by Site)", x = "Order", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+#### Family 
+
+```{r, fig.width = 13, fig.height = 10}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Family)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Family (Colored by Site)", x = "Family", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+
+#### Genera
 
 ```{r}
 actino %>% 
@@ -260,7 +280,7 @@ actino %>%
   theme(axis.text.y = element_text(size = 4)) +
   scale_x_discrete(labels = wrap_format(25)) +
   theme(axis.text.x = element_text(size = 8)) +
-  scale_y_continuous(limits = c(0, 20)) +
+  scale_y_continuous(limits = c(0, 8)) +
   labs(title = str_wrap("Mycobacterium tuberculosis Counts at each Site", width = 30)) +
   ggeasy::easy_all_text_color("darkred") +
   ggeasy::easy_center_title() +
