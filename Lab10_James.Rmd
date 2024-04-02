@@ -8,6 +8,7 @@ output:
     toc_depth: 5
     theme: cerulean 
     highlight: monochrome
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -21,6 +22,22 @@ library(knitr)
 library(DT)
 library(readr)
 ```
+
+# Exercise 2
+
+
+
+![Scanning Electrom Micrograph of Actinomyes israelii](Actinobacteria.jpg)
+
+Find details about environment, associated diseases, environmental impact, etc.
+
+Actinobacteria are diverse, gram positive bacteria found in both aquatic and terrestrial environments(@Servin 2008). In soil, they are decomposers of organic matter and play a key role in the carbon cycle. This niche is likely distinct from decomposers such as fungi, as they often form symbiotic relationships with plants as nitrogen fixers(@Kakoi).
+
+Interestingly, for a long time Actinomycetota colonies were believed to be fungi as they form extensive mycelia. This is how they were actually named (myc being derived from the Greek "myket" for "mushroom")(@Buchanan). 
+
+Certain Actinomycetota are important members of the human microbiome. In fact, the genus Bifidobacterium are the most common bacteria in the human infant microbiome(@Turroni). In the intestines, bifidobacteria help maintain the mucosal barrier and play a key role in reduction of inflammation by reducing lipopolysacharides in the GI tract(@Pinzone).
+
+Actinobacteria are also relevant to human disease. Some members of the genus Mycobacterium, for instance, are pathogenic and are the cause of diseases such as tuberculosis, leprosy, diptheria, vaginosis, and others(@Lewin). Still others from the genus Steptomyces are a major source of common antibiotics used in medicine(@Emerson).
 
 ```{r}
 Project_MAGs <- read.csv("Project_MAGs.csv") 
@@ -46,6 +63,8 @@ theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
   coord_flip() 
 ```
 
+Clearly, our Phylum, Actinobacteriota, makes up the highest percentage of bacteria MAGs at the site! We can also assess the different classes that make up the bacterial MAGs at LBJ:
+
 ```{r, fig.width = 9, fig.height = 5}
 Project_MAGs_LBJ %>% 
 ggplot(aes(x = fct_rev(fct_infreq(Class)))) +
@@ -56,6 +75,8 @@ theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
                         text = element_text(size = 15), plot.title = element_text(size = 17, hjust = -2))+
   coord_flip() 
 ```
+
+It may also be useful to assess the genome size histogram of all the bacteria at our site:
 
 ```{r}
 Project_MAGs_LBJ %>% 
@@ -69,9 +90,14 @@ ggplot(aes(x= Total.Number.of.Bases)) +
 
 
 ```
+
+Along with viewing the National Grasslands LBJ Mags in table mode:
+
 ```{r}
 datatable(Project_MAGs_LBJ)
 ```
+
+Now, lets delve in and take a closer look at our Phylum, Actinobacteriota. We can first assess its abundance at each site:
 
 
 ## Abundance of Actinobacteriota at NEON Sites 
@@ -88,6 +114,58 @@ theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
                         text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
   coord_flip() 
 ```
+
+Interestingly, actinobacteriota is found most predominantly at National Grasslands LBJ, our site! We can also take a look and see some of the lower level taxonomic breakdown of these actinobacteriota: 
+
+### Taxonomic Breakdown of Actinobacteriota at Sites
+
+#### Class
+
+```{r, fig.width = 13, fig.height = 5}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Class)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Class (Colored by Site)", x = "Class", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+#### Order
+
+```{r, fig.width = 13, fig.height = 5}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Order)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Order (Colored by Site)", x = "Order", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+#### Family 
+
+```{r, fig.width = 13, fig.height = 10}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Family)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Family (Colored by Site)", x = "Family", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+This gives us alot of useful information. However, going further down the taxonomy might give us too much information! So we will stop at family. Although if we wanted, we could determine even the species of each actinobacteriota, colored by site.
+
 
 # Exercise 4
 
