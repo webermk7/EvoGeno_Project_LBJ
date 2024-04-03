@@ -17,7 +17,6 @@ library(knitr)
 library(DT)
 library(plotly)
 library(scales)
-
 library(ggeasy)
 
 ```
