@@ -3,3 +3,57 @@ title: "Weber_Lab10"
 output: html_document
 date: "2024-03-27"
 ---
+### Goals 
+  - A description of your NEON site including a link to the NEON site information as reference and photos.  
+  - A table from IMG with the metagenome information including Ecosystem subtype, latitude, longitude, Genome Size, Gene Count. 
+  - A summary of the MAGs at your site including the taxomic breakdown. Use both tables and graphs.
+  - An overview of your Phylum/Class including references.  
+  - A summary of what sites your Phylum/Class is found at. Include tables and graphs with lower level taxonomic information.  
+
+```{r, library packages}
+library(tidyverse)
+library(plotly)
+library(knitr)
+library(DT)
+```
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_edArchaea.csv") %>%
+  # remove columns that are not needed for data analysis
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`)) %>% 
+  # create a new column with the Assembly Type
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>% 
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus"), "; ", remove = FALSE) %>% 
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "S-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+
+```{r}
+kable(
+project_groups <- read_csv("data/project_groups.csv") 
+)
+```
+
+```{r, metadata table}
+col_name<- colnames(Metagenome[ ,5])
+
+Metagenome <- read_tsv("data/exported_img_data.tsv") %>%
+  rename(site = col_name) %>% 
+  mutate_at(site , str_replace(,)"Terrestrial soil microbial communities from ", ""),
+    site = str_replace("-.*", ""))
+
+
+colnames(Metagenome[ ,5])
+print(Metagenome[3,5])
+```
+
