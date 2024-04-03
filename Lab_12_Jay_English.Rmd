@@ -1,0 +1,397 @@
+---
+title: "Jay_English_Lab_12"
+author: "Jay English"
+date: "2024-03-27"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(DT)
+library(plotly)
+library(scales)
+library(ggeasy)
+
+```
+
+# NEON MAG table
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_edArchaea.csv") %>% 
+  # remove columns that are not needed for data analysis
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`)) %>% 
+  # create a new column with the Assembly Type
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>% 
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus"), "; ", remove = FALSE) %>% 
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "S-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+
+# NEON Metagenome info
+
+```{r}
+NEON_metagenomes <- read_tsv("data/exported_img_data.tsv") %>% 
+  rename(`Genome Name` = `Genome Name / Sample Name`) %>% 
+  filter(str_detect(`Genome Name`, 're-annotation', negate = T)) %>% 
+  filter(str_detect(`Genome Name`, 'WREF plot', negate = T)) 
+```
+
+## Reformat Genome Name as we did for the MAG table
+
+```{r}
+NEON_metagenomes <- NEON_metagenomes %>% 
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+
+# NEON Chemistry data
+
+```{r}
+NEON_chemistry <- read_tsv("data/neon_chem.tsv") %>% 
+  # remove -COMP from genomicsSampleID
+  mutate_at("genomicsSampleID", str_replace, "-COMP", "") 
+```
+
+## Column descriptions
+
+```{r}
+kable(
+  NEON_chemistry_description <- read_tsv("data/neon_chem.tsv") 
+)
+```
+
+# Exercises
+
+## Tidyverse Cookbook examples
+
+### View tibbles
+
+```{r}
+
+band_members
+
+band_instruments
+```
+
+### Left join
+
+```{r}
+band_members %>% 
+  left_join(band_instruments, by = "name")
+```
+
+### Right join
+
+```{r}
+band_members %>% 
+  right_join(band_instruments, by = "name")
+```
+
+### Inner Join
+
+```{r}
+band_members %>% 
+  inner_join(band_instruments, by = "name")
+```
+
+### Full join
+
+```{r}
+band_members %>% 
+  full_join(band_instruments, by = "name")
+```
+
+### Specify which columns to join by
+
+```{r}
+table1 %>% 
+  left_join(table3, by = c("country", "year"))
+```
+
+### Joining non-matching column names
+
+```{r}
+band_members %>% 
+  left_join(band_instruments2, by = c(name = "artist"))
+```
+
+### Specify your own suffixes for unused columns
+
+```{r}
+table4a %>% 
+  left_join(table4b, by = "country", suffix = c("_cases", "_pop"))
+```
+
+## Exercise 1
+
+Create some tables with just a few columns to work with
+
+```{r}
+# In Neon MAGS, the columns Sample Name, Site ID, GTDB-Tk Taxonomy Lineage'
+
+small_MAGS <- NEON_MAGs %>% 
+  select(`Sample Name`, `Site ID`, `GTDB-Tk Taxonomy Lineage`)
+
+datatable(small_MAGS)
+
+# In NEON metagenomes, the columns Sample Name, Site ID, Ecosystem Subtype
+
+small_metagenomes <- NEON_metagenomes %>% 
+  select(`Sample Name`, `Site ID`, `Ecosystem Subtype`)
+
+datatable(small_metagenomes)
+# In NEON Chemistry, the columns genomicsSampleID, siteID, nlcdClass
+
+small_chemistry <- NEON_chemistry %>% 
+  select(`genomicsSampleID`, `siteID`, `nlcdClass`)
+
+datatable(small_chemistry)
+```
+
+## Exercise 2
+
+Filter to contain just the data for your project site
+
+```{r}
+filtered_small_MAGS <- small_MAGS %>% 
+  filter(`Site ID` == "CLBJ" )
+
+filtered_small_metagenomes <- small_metagenomes %>% 
+  filter(`Site ID` == "CLBJ")
+
+filtered_small_chemistry <- small_chemistry %>% 
+  filter(`siteID` == "CLBJ")
+```
+
+## Exercise 3
+
+Do a left join of the NEON MAGs with NEON metagenomes vy the sample name and show the resulting table. 
+
+```{r}
+NEON_MAGs %>% 
+  left_join(NEON_metagenomes, by = "Sample Name") %>% 
+  datatable()
+```
+
+## Exercise 4
+
+Using the data from your site do a left join of NEON chemistry with NEON metagenomes by Sample Name and genomicsSampleID columns and show the table.
+
+```{r}
+filtered_small_chemistry %>% 
+  left_join(filtered_small_metagenomes, by = c("genomicsSampleID" = "Sample Name")) %>% 
+  datatable()
+```
+
+## Exercise 5
+
+Does it matter with these tables if you do a left, right, or full join?
+
+```{r}
+filtered_small_chemistry %>% 
+  left_join(filtered_small_metagenomes, by = c("genomicsSampleID" = "Sample Name")) %>% 
+  datatable()
+
+filtered_small_chemistry %>% 
+  right_join(filtered_small_metagenomes, by = c("genomicsSampleID" = "Sample Name")) %>% 
+  datatable()
+
+filtered_small_chemistry %>% 
+  full_join(filtered_small_metagenomes, by = c("genomicsSampleID" = "Sample Name")) %>% 
+  datatable()
+```
+In this case it doesn't matter because they all have the same data.
+
+## Exercise 6
+
+Do a left join of the NEON chemistry and NEON metagenomes by site ID and show the resulting table.
+
+```{r}
+NEON_chemistry %>% 
+  left_join(NEON_metagenomes, by = c("siteID" = "Site ID")) %>%
+  datatable()
+```
+
+## Exercise 7
+
+Join the NEON MAG, metagenome, and chemistry dataframes into a single dataframe. What happens to the metagenome and chemistry information on the rows with the NEON coassembly?
+
+```{r}
+partial_merged <-NEON_MAGs %>% 
+  full_join(NEON_chemistry, by = c("Site ID" = "siteID"))
+
+merged <- partial_merged %>% 
+    full_join(NEON_metagenomes, by = "Site ID")
+
+#I commented this out to keep my browser from crashing. There were 63,000 and something entries though
+#datatable(merged)
+
+```
+
+## Exercise 8
+
+Filter the above table to contain data just for your project taxonomic group. Make a boxplot of soil temperatures for each sample at the sites.
+
+```{r, fig.height=10, fig.width=30}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = fct_infreq(`Sample Name.x`), y = `soilTemp`, fill = `Site.x`)) +
+  geom_boxplot() +
+   theme(legend.position = "bottom") +
+  theme(legend.justification = "left") +
+  theme(legend.key.size = unit( 0.4, 'cm')) +
+  theme(legend.key.height = unit(0.4, 'cm')) +
+  theme(legend.key.width = unit(0.4, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 10, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 10)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(14, 14, 14, 14)) +
+  theme(legend.box.just = "center") +
+  theme( axis.text.x = element_text(size = 14, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_x_discrete(labels = wrap_format(50)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 20)) +
+  xlab("Sample") +
+  ylab("Temperature (Celcius)") +
+  labs(title = str_wrap("Soil Temperature of samples by site", width = 30)) +
+  ggeasy::easy_center_title() 
+  
+```
+
+## Exercise 9
+
+Make a scatterplot of Ecosystem Subtype vs Temperature. Color by Order
+
+```{r, fig.height=10, fig.width= 10}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = `nlcdClass`, y = `soilTemp`, color = `Order`)) +
+  geom_point() +
+  theme( axis.text.x = element_text(size = 14, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 20)) +
+  xlab("Ecosystem") +
+  ylab("Temperature (Celcius)") +
+  labs(title = "Soil Temperature of Ecosystems by Order", width = 30) +
+  ggeasy::easy_center_title() 
+```
+
+## Exercise 10
+
+Make a scatterplots of soillnCaClpH vs ncldClass. Use Family as the color for points.
+
+```{r, fig.height=10, fig.width= 10}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = `nlcdClass`, y = `soilInCaClpH`, color = `Family`)) +
+  geom_point() +
+  theme( axis.text.x = element_text(size = 14, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 20)) +
+  xlab("Ecosystem") +
+  ylab("Temperature (Celcius)") +
+  labs(title = "Soil Temperature of Ecosystems by Order", width = 30) +
+  ggeasy::easy_center_title() 
+```
+
+## Exercise 11
+
+Here is a graph of the number of Actinobacteria by pH. Here we can see which genera do best in which pH range. 
+
+```{r, fig.height=25, fig.width=75}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = fct_infreq(`Sample Name.x`), y = `soilInWaterpH`, fill = `Genus`)) +
+  geom_boxplot() +
+   theme(legend.position = "bottom") +
+  theme(legend.justification = "right") +
+  theme(legend.key.size = unit( 0.4, 'cm')) +
+  theme(legend.key.height = unit(0.4, 'cm')) +
+  theme(legend.key.width = unit(0.4, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 10, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 10)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(14, 14, 14, 14)) +
+  theme(legend.box.just = "center") +
+  theme( axis.text.x = element_text(size = 20, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_x_discrete(labels = wrap_format(50)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 40)) +
+  xlab("Sample") +
+  ylab("pH") +
+  labs(title = "The pH Actinobacteria were found in by Genus", width = 30) +
+  ggeasy::easy_center_title() +
+  ggeasy::easy_x_axis_title_size(size = 60) +
+  ggeasy::easy_y_axis_title_size(size = 60)
+```
+
+Exercise 12
+
+Here is a graph of Actinobacteria as it relates to nitrogen in the soil. With this we might discern which genera are important for fixing nitrogen at each site.
+
+```{r, fig.height=10, fig.width= 30}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = `Sample Name.x`, y = `nitrogenPercent`, color = `Genus`)) +
+  geom_boxplot() +
+  theme( axis.text.x = element_text(size = 6, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 20)) +
+  xlab("Sample") +
+  ylab("Percent Nitrogen") +
+  labs(title = "Soil Temperature of Ecosystems by Order", width = 30) +
+  ggeasy::easy_center_title() +
+  ggeasy::easy_adjust_legend(to = c("center")) +
+  ggeasy::easy_change_legend(to = c("bottom"))
+```
+
+## Exercise 13
+
+```{r, fig.height=10, fig.width= 30}
+merged %>% 
+  filter(Phylum == "Actinobacteriota") %>% 
+  ggplot(mapping = aes(x = `Sample Name.x`, y = `organicd13C`, color = `Site.x`)) +
+  geom_boxplot() +
+  theme( axis.text.x = element_text(size = 6, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 20)) +
+  xlab("Sample") +
+  ylab("13C") +
+  labs(title = "Carbon 13 isoptope in Actinobacteriota samples", width = 30) +
+  ggeasy::easy_center_title() +
+  ggeasy::easy_adjust_legend(to = c("center")) +
+  ggeasy::easy_change_legend(to = c("bottom"))
+
+```
+
