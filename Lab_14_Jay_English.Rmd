@@ -1,0 +1,462 @@
+---
+title: "Lab_14_Jay_English"
+author: "Jay English"
+date: "2024-04-15"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+```{r}
+library(tidyverse)
+library(zoo)
+library(knitr)
+library(ggeasy)
+```
+
+# NEON MAG table
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_edArchaea.csv") %>% 
+  
+  # remove columns that are not needed for data analysis
+  
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`)) %>%
+  
+  # create a new column with the Assembly Type
+  
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>%
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus"), "; ", remove = FALSE) %>% 
+  
+  # Get rid of the the common string "Soil microbial communities from "
+  
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  
+  # Use the first `-` to split the column in two
+  
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  
+  # Get rid of the the common string "S-comp-1"
+  
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  
+  # separate the Sample Name into Site ID and plot info
+  
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+
+```
+
+## Filter for individual assemblies
+
+```{r}
+
+NEON_MAGs_ind <- NEON_MAGs %>% 
+  filter(`Assembly Type` == "Individual") 
+
+```
+
+## Filter for combined assemblies
+
+```{r}
+
+NEON_MAGs_co <- NEON_MAGs %>% 
+  filter(`Assembly Type` == "Combined") 
+
+```
+
+# Make input for Pavian Sankey Plot (from IMG format for GTDB taxonomy)
+
+## Make data frame in Pavian Sankey format
+
+```{r}
+
+# Select the GTDB Taxonomic lineage and separate into taxonomic levels
+
+sankey_data <- NEON_MAGs_co %>% 
+  select(`GTDB-Tk Taxonomy Lineage`) %>% 
+  
+  # NAs are likely Archaea
+  
+  replace_na(list(`GTDB-Tk Taxonomy Lineage` = 'Archaea')) %>% 
+  
+  # Pavian format requires p__ etc
+  
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), "; ")
+
+```
+
+## Fill in the NAs with the higher level taxonomic level to the left
+
+```{r}
+
+sankey_data[] <- t(apply(sankey_data, 1, zoo::na.locf))
+
+# Put the data into a format that can be read by the Sankey app
+
+sankey_data <- sankey_data %>% 
+  unite(col = "classification", c(Domain, Phylum, Class, Order, Family, Genus, Species), sep = '; ') %>%
+  mutate_at("classification", str_replace, "Archaea", "d_Archaea") %>%
+  mutate_at("classification", str_replace, "Bacteria", "d_Bacteria") %>%
+  mutate_at("classification", str_replace, "; ", "|p__") %>% 
+  mutate_at("classification", str_replace, "; ", "|c__") %>% 
+  mutate_at("classification", str_replace, "; ", "|o__") %>% 
+  mutate_at("classification", str_replace, "; ", "|f__") %>% 
+  mutate_at("classification", str_replace, "; ", "|g__") %>% 
+  mutate_at("classification", str_replace, "; ", "|s__") 
+
+# Create a format for Pavian with counts for each taxonomic level
+
+sankey_data_s <- sankey_data
+sankey_data_g <- sankey_data
+sankey_data_f <- sankey_data
+sankey_data_o <- sankey_data
+sankey_data_c <- sankey_data
+sankey_data_p <- sankey_data
+sankey_data_d <- sankey_data
+
+sankey_data_g$classification <- sub("\\|s__.*", "", sankey_data_g$classification)
+sankey_data_f$classification <- sub("\\|g__.*", "", sankey_data_f$classification)  
+sankey_data_o$classification <- sub("\\|f__.*", "", sankey_data_o$classification)  
+sankey_data_c$classification <- sub("\\|o__.*", "", sankey_data_c$classification)  
+sankey_data_p$classification <- sub("\\|c__.*", "", sankey_data_p$classification)  
+sankey_data_d$classification <- sub("\\|p__.*", "", sankey_data_d$classification) 
+
+sankey_data_allTaxa <- bind_rows(sankey_data_s, sankey_data_g, sankey_data_f, sankey_data_o, sankey_data_c, sankey_data_p, sankey_data_d) %>% 
+  mutate(classification = as.factor(classification)) %>% 
+  count(classification) %>% 
+  
+# rename for Pavian format
+  
+  rename(`#SampleID` = `classification`) %>% 
+  rename(`Metaphlan2_Analysis` = `n`)
+
+# Write file to input to Pavian Sankey
+
+write_tsv(sankey_data_allTaxa, "NEON_MAG_co_pavian.txt")
+```
+
+
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_co_pavian.txt.html")
+```
+
+# Now for the individualized data
+
+
+## Make data frame in Pavian Sankey format
+
+```{r}
+
+# Select the GTDB Taxonomic lineage and separate into taxonomic levels
+
+sankey_data <- NEON_MAGs_ind %>% 
+  select(`GTDB-Tk Taxonomy Lineage`) %>% 
+  
+  # NAs are likely Archaea
+  
+  replace_na(list(`GTDB-Tk Taxonomy Lineage` = 'Archaea')) %>% 
+  
+  # Pavian format requires p__ etc
+  
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), "; ")
+
+```
+
+## Fill in the NAs with the higher level taxonomic level to the left
+
+```{r}
+
+sankey_data[] <- t(apply(sankey_data, 1, zoo::na.locf))
+
+# Put the data into a format that can be read by the Sankey app
+
+sankey_data <- sankey_data %>% 
+  unite(col = "classification", c(Domain, Phylum, Class, Order, Family, Genus, Species), sep = '; ') %>%
+  mutate_at("classification", str_replace, "Archaea", "d_Archaea") %>%
+  mutate_at("classification", str_replace, "Bacteria", "d_Bacteria") %>%
+  mutate_at("classification", str_replace, "; ", "|p__") %>% 
+  mutate_at("classification", str_replace, "; ", "|c__") %>% 
+  mutate_at("classification", str_replace, "; ", "|o__") %>% 
+  mutate_at("classification", str_replace, "; ", "|f__") %>% 
+  mutate_at("classification", str_replace, "; ", "|g__") %>% 
+  mutate_at("classification", str_replace, "; ", "|s__") 
+
+# Create a format for Pavian with counts for each taxonomic level
+
+sankey_data_s <- sankey_data
+sankey_data_g <- sankey_data
+sankey_data_f <- sankey_data
+sankey_data_o <- sankey_data
+sankey_data_c <- sankey_data
+sankey_data_p <- sankey_data
+sankey_data_d <- sankey_data
+
+sankey_data_g$classification <- sub("\\|s__.*", "", sankey_data_g$classification)
+sankey_data_f$classification <- sub("\\|g__.*", "", sankey_data_f$classification)  
+sankey_data_o$classification <- sub("\\|f__.*", "", sankey_data_o$classification)  
+sankey_data_c$classification <- sub("\\|o__.*", "", sankey_data_c$classification)  
+sankey_data_p$classification <- sub("\\|c__.*", "", sankey_data_p$classification)  
+sankey_data_d$classification <- sub("\\|p__.*", "", sankey_data_d$classification) 
+
+sankey_data_allTaxa_ind <- bind_rows(sankey_data_s, sankey_data_g, sankey_data_f, sankey_data_o, sankey_data_c, sankey_data_p, sankey_data_d) %>% 
+  mutate(classification = as.factor(classification)) %>% 
+  count(classification) %>% 
+  
+# rename for Pavian format
+  
+  rename(`#SampleID` = `classification`) %>% 
+  rename(`Metaphlan2_Analysis` = `n`)
+
+# Write file to input to Pavian Sankey
+
+write_tsv(sankey_data_allTaxa_ind, "NEON_MAG_ind_pavian.txt")
+```
+
+
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_ind_pavian.txt.html")
+```
+
+# Exercises
+
+## Exercise 1
+
+```{r}
+NEON_MAGs_ind_actino <- NEON_MAGs %>% 
+  filter(`Phylum` == "Actinobacteriota") 
+```
+
+```{r}
+sankey_data <- NEON_MAGs_ind_actino %>% 
+  select(`GTDB-Tk Taxonomy Lineage`) %>% 
+  
+  # NAs are likely Archaea
+  
+  replace_na(list(`GTDB-Tk Taxonomy Lineage` = 'Archaea')) %>% 
+  
+  # Pavian format requires p__ etc
+  
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Phylum", "Class", "Order", "Family", "Genus", "Species"), "; ")
+
+```
+
+
+```{r}
+
+sankey_data[] <- t(apply(sankey_data, 1, zoo::na.locf))
+
+# Put the data into a format that can be read by the Sankey app
+
+sankey_data <- sankey_data %>% 
+  unite(col = "classification", c(Phylum, Class, Order, Family, Genus, Species), sep = '; ') %>%
+  mutate_at("classification", str_replace, "; ", "|p__") %>% 
+  mutate_at("classification", str_replace, "; ", "|c__") %>% 
+  mutate_at("classification", str_replace, "; ", "|o__") %>% 
+  mutate_at("classification", str_replace, "; ", "|f__") %>% 
+  mutate_at("classification", str_replace, "; ", "|g__") %>% 
+  mutate_at("classification", str_replace, "; ", "|s__") 
+
+# Create a format for Pavian with counts for each taxonomic level
+
+sankey_data_s <- sankey_data
+sankey_data_g <- sankey_data
+sankey_data_f <- sankey_data
+sankey_data_o <- sankey_data
+sankey_data_c <- sankey_data
+sankey_data_p <- sankey_data
+
+sankey_data_g$classification <- sub("\\|s__.*", "", sankey_data_g$classification)
+sankey_data_f$classification <- sub("\\|g__.*", "", sankey_data_f$classification)  
+sankey_data_o$classification <- sub("\\|f__.*", "", sankey_data_o$classification)  
+sankey_data_c$classification <- sub("\\|o__.*", "", sankey_data_c$classification)  
+sankey_data_p$classification <- sub("\\|c__.*", "", sankey_data_p$classification)  
+
+
+sankey_data_allTaxa_ind_actino <- bind_rows(sankey_data_s, sankey_data_g, sankey_data_f, sankey_data_o, sankey_data_c, sankey_data_p) %>% 
+  mutate(classification = as.factor(classification)) %>% 
+  count(classification) %>% 
+  
+# rename for Pavian format
+  
+  rename(`#SampleID` = `classification`) %>% 
+  rename(`Metaphlan2_Analysis` = `n`)
+
+# Write file to input to Pavian Sankey
+
+write_tsv(sankey_data_allTaxa_ind_actino, "NEON_MAG_ind_actino_pavian.txt")
+```
+
+
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_ind_actino_pavian.txt.html")
+```
+
+## Exercise 2
+
+```{r}
+NEON_MAGs_co_actino <- NEON_MAGs %>% 
+  filter(`Phylum` == "Actinobacteriota") 
+```
+
+```{r}
+sankey_data <- NEON_MAGs_co_actino %>% 
+  select(`GTDB-Tk Taxonomy Lineage`) %>% 
+  
+  # NAs are likely Archaea
+  
+  replace_na(list(`GTDB-Tk Taxonomy Lineage` = 'Archaea')) %>% 
+  
+  # Pavian format requires p__ etc
+  
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Phylum", "Class", "Order", "Family", "Genus", "Species"), "; ")
+
+```
+
+
+```{r}
+
+sankey_data[] <- t(apply(sankey_data, 1, zoo::na.locf))
+
+# Put the data into a format that can be read by the Sankey app
+
+sankey_data <- sankey_data %>% 
+  unite(col = "classification", c(Phylum, Class, Order, Family, Genus, Species), sep = '; ') %>%
+  mutate_at("classification", str_replace, "; ", "|p__") %>% 
+  mutate_at("classification", str_replace, "; ", "|c__") %>% 
+  mutate_at("classification", str_replace, "; ", "|o__") %>% 
+  mutate_at("classification", str_replace, "; ", "|f__") %>% 
+  mutate_at("classification", str_replace, "; ", "|g__") %>% 
+  mutate_at("classification", str_replace, "; ", "|s__") 
+
+# Create a format for Pavian with counts for each taxonomic level
+
+sankey_data_s <- sankey_data
+sankey_data_g <- sankey_data
+sankey_data_f <- sankey_data
+sankey_data_o <- sankey_data
+sankey_data_c <- sankey_data
+sankey_data_p <- sankey_data
+
+sankey_data_g$classification <- sub("\\|s__.*", "", sankey_data_g$classification)
+sankey_data_f$classification <- sub("\\|g__.*", "", sankey_data_f$classification)  
+sankey_data_o$classification <- sub("\\|f__.*", "", sankey_data_o$classification)  
+sankey_data_c$classification <- sub("\\|o__.*", "", sankey_data_c$classification)  
+sankey_data_p$classification <- sub("\\|c__.*", "", sankey_data_p$classification)  
+
+
+sankey_data_allTaxa_co_actino <- bind_rows(sankey_data_s, sankey_data_g, sankey_data_f, sankey_data_o, sankey_data_c, sankey_data_p) %>% 
+  mutate(classification = as.factor(classification)) %>% 
+  count(classification) %>% 
+  
+# rename for Pavian format
+  
+  rename(`#SampleID` = `classification`) %>% 
+  rename(`Metaphlan2_Analysis` = `n`)
+
+# Write file to input to Pavian Sankey
+
+write_tsv(sankey_data_allTaxa_co_actino, "NEON_MAG_co_actino_pavian.txt")
+```
+
+
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_co_actino_pavian.txt.html")
+```
+
+## Exercise 3
+
+
+```{r}
+
+NEON_MAGs_co_actino_all_taxa <- NEON_MAGs %>% 
+  filter(`Phylum` == "Actinobacteriota") 
+
+```
+
+
+
+```{r}
+
+# Select the GTDB Taxonomic lineage and separate into taxonomic levels
+
+sankey_data <- NEON_MAGs_co_actino_all_taxa %>% 
+  select(`GTDB-Tk Taxonomy Lineage`) %>% 
+  
+  # NAs are likely Archaea
+  
+  replace_na(list(`GTDB-Tk Taxonomy Lineage` = 'Archaea')) %>% 
+  
+  # Pavian format requires p__ etc
+  
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), "; ")
+
+```
+
+## Fill in the NAs with the higher level taxonomic level to the left
+
+```{r}
+
+sankey_data[] <- t(apply(sankey_data, 1, zoo::na.locf))
+
+# Put the data into a format that can be read by the Sankey app
+
+sankey_data <- sankey_data %>% 
+  unite(col = "classification", c(Domain, Phylum, Class, Order, Family, Genus, Species), sep = '; ') %>%
+  mutate_at("classification", str_replace, "Archaea", "d_Archaea") %>%
+  mutate_at("classification", str_replace, "Bacteria", "d_Bacteria") %>%
+  mutate_at("classification", str_replace, "; ", "|p__") %>% 
+  mutate_at("classification", str_replace, "; ", "|c__") %>% 
+  mutate_at("classification", str_replace, "; ", "|o__") %>% 
+  mutate_at("classification", str_replace, "; ", "|f__") %>% 
+  mutate_at("classification", str_replace, "; ", "|g__") %>% 
+  mutate_at("classification", str_replace, "; ", "|s__") 
+
+# Create a format for Pavian with counts for each taxonomic level
+
+sankey_data_s <- sankey_data
+sankey_data_g <- sankey_data
+sankey_data_f <- sankey_data
+sankey_data_o <- sankey_data
+sankey_data_c <- sankey_data
+sankey_data_p <- sankey_data
+sankey_data_d <- sankey_data
+
+sankey_data_g$classification <- sub("\\|s__.*", "", sankey_data_g$classification)
+sankey_data_f$classification <- sub("\\|g__.*", "", sankey_data_f$classification)  
+sankey_data_o$classification <- sub("\\|f__.*", "", sankey_data_o$classification)  
+sankey_data_c$classification <- sub("\\|o__.*", "", sankey_data_c$classification)  
+sankey_data_p$classification <- sub("\\|c__.*", "", sankey_data_p$classification)  
+sankey_data_d$classification <- sub("\\|p__.*", "", sankey_data_d$classification) 
+
+sankey_data_allTaxa <- bind_rows(sankey_data_s, sankey_data_g, sankey_data_f, sankey_data_o, sankey_data_c, sankey_data_p, sankey_data_d) %>% 
+  mutate(classification = as.factor(classification)) %>% 
+  count(classification) %>% 
+  
+# rename for Pavian format
+  
+  rename(`#SampleID` = `classification`) %>% 
+  rename(`Metaphlan2_Analysis` = `n`)
+
+# Write file to input to Pavian Sankey
+
+write_tsv(sankey_data_allTaxa, "NEON_MAG_co_actino_all_taxa_pavian.txt")
+```
+
+
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_co_actino_all_taxa_pavian.txt.html")
+```
