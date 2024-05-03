@@ -1,0 +1,41 @@
+---
+title: "Final_Project_Jay_English"
+author: "Jay English"
+date: "2024-05-03"
+bibliography: LBJ_Project.bib
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(ggtree)
+library(TDbook) 
+library(ggimage)
+library(rphylopic)
+library(treeio)
+library(tidytree)
+library(ape)
+library(TreeTools)
+library(phytools)
+library(ggnewscale)
+library(ggtreeExtra)
+library(ggstar)
+library(tidyverse)
+library(knitr)
+library(DT)
+library(plotly)
+library(scales)
+library(ggeasy)
+```
+
+# Abstract
+
+There are a diverse array of microorganisms found across Earth, and they play a vital role in various ecosystems. There is an ongoing effort in the microbiologist community to find, classify, and study these microorganisms, both to determine their importance in ecology and to monitor for any possible pathogenic outbreaks. There is also an added benefit of studying microorganisms for novel medical uses. Although there has been a surge in data related to microbiotic research, finding ways to take these large datasets and analyze them in a meaningful way has been challenging. Here, we present analysis of newly-deposited data from the National Ecological Observatory Network (NEON) using open-source packages in R.
+
