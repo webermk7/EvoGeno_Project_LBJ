@@ -1,0 +1,85 @@
+---
+title: "Final_Project_Jay_English"
+author: "Jay English"
+date: "2024-05-03"
+bibliography: LBJ_Project.bib
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(ggtree)
+library(TDbook) 
+library(ggimage)
+library(rphylopic)
+library(treeio)
+library(tidytree)
+library(ape)
+library(TreeTools)
+library(phytools)
+library(ggnewscale)
+library(ggtreeExtra)
+library(ggstar)
+library(tidyverse)
+library(knitr)
+library(DT)
+library(plotly)
+library(scales)
+library(ggeasy)
+```
+
+# Abstract
+
+There are a diverse array of microorganisms found across Earth, and they play a vital role in various ecosystems. There is an ongoing effort in the microbiologist community to find, classify, and study these microorganisms, both to determine their importance in ecology and to monitor for any possible pathogenic outbreaks. Although there has been a surge in data related to microbiotic research, finding ways to take these large datasets and analyze them in a meaningful way has been challenging. Here, we present analysis of newly-deposited data from the National Ecological Observatory Network (NEON) using open-source packages in R.
+
+# Motivating Reasons
+
+Studying microbial organisms is beneficial for many reasons. Much of modern medicine is owed to the study of these branches of life, as antibiotics are naturally found throughout the microbial universe as these organisms evolve to compete with one another. As such, studying microbes in their natural environment directly benefits mankind. Also important is the ecology of these organisms. Humans are not ecologically isolated; our actions change the environment, which can have an impact to organisms throughout the tree of life. As the environment changes, microorganism populations may change in response. This may not only impact our ability to study them for medicinal purposes, but may also change the frequency and location of pathogenic outbreaks detrimental to societies. As such, monitoring of microbial life can provide predictive power for coming outbreaks, allowing governments to prepare and react quickly to disease outbreaks. Both ecological and microbial studies, however, generate large amounts of data which can be difficult to parse. 
+
+With advances in computing, languages have been simplified and programs have been developed to make studying large data sets easier. Open-source languages such as R help to bridge the gap between computer science, which focuses on programming to handle data efficiently, and biology, which generates data from raw samples and experimentation. Using these tools, bioinformaticists seek to yield actionable results from unyieldingly large sets of data. Scientists are increasingly sharing the data they generate into large databases, which provide an ample pool to study with bioinformatic techniques. In this project, we have analyzed one such data set from NEON to identify the microbiome represented at one site in Texas, the Lyndon B. Johnson National Grasslands, and to hone in specifically on Actinobacteriota, a large, diverse phylum of bacteria with many medicinal and pathogenic uses.
+
+# Introduction
+
+## The Lyndon B. Johnson National Grassland
+
+<center>
+![A Texas Sunset over the LBJ National Grasslands.  Credits: Pam LeBlanc photo](LBJ.jpg)
+<center>
+
+Long through history, the lands that would become the LBJ National Grasslands were favorite hunting grounds for native tribes such as the Cherokee, Creek, Seminole, Waco, and Kickapood [@dferriero_importance_2021]. In fact, the earliest discovered human artifacts in North America, namely remains of animals, seeds, and various others were discovered not far from this region [@noauthor_fort_nodate; @noauthor_human_2023].
+
+In the 1700s and 1800s, the Comanche commanded this region after aquiring horses and beginning a nomadic war tribe-like lifestyle [noauthor_fort_nodate; @association_comanche_nodate]. In 1843, negotiations between these and other tribes with the likes of Sam Houston's deligate generals, Edward J. Tarrant and George W. Terrell saw the natives relocated to territory west of a line through the future site of Fort Worth, giving this town its famous slogan "Where the West Begins"... Not because of its cowboy culture, but rather because this is what the line was referred to as. The second president of Texas, Mirabeau Lamar, did not recognize these treaties for peace, and called for the "total extinction or total repulsion" of the natives as white settlement in the region expanded [noauthor_human_2023; @noauthor_native_nodate].
+
+Ranching has always been historically associated with Texas, and Fort Worth was home to some of the largest cattle trades in the world. Ranchers would drive their cattle from throughout the Great Plains to be sold or traded at the Fort Worth stockyard [@noauthor_home_nodate].
+
+As such, the grasslands surrounding Fort Worth became essential grazing lands along the final legs of cattle drives. The approximately 20,250 acres surrounding Black Creek Lake Northwest of Fort Worth was soon worked extensively by cattle drivers and homesteaders alike. With a steady influx of homesteaders across the great plains, land mismanagement become a major problem, eventually culminating in the dust bowl, which devestated the natural resources of the region [@noauthor_human_2023]. 
+
+President Hoover then began researching agricultural remedies, and his successor, Franklin D. Roosevelt ended land giveaways and began federal management of certain natural lands, including these regions. With well-placed fencing, rotation, and grazing restrictions, vegetation returned to the region around mid-century [@noauthor_human_2023].
+
+Today, the LBJ National Grasslands are federally managed multiple-use areas. They are protected from being developed or plowed, but still allow limited drilling for the oil and gas industry, grazing for ranching, hunting, camping, and general tourism [@noauthor_national_nodate]. 
+
+##  Actinobacteria
+
+<center>
+![Scanning Electrom Micrograph of Actinomyes israelii](Actinobacteria.jpg)
+<center>
+
+Actinobacteria are diverse, gram positive bacteria found in both aquatic and terrestrial environments [@servin_evidence_2008]. In soil, they are decomposers of organic matter and play a key role in the carbon cycle. This niche is likely distinct from decomposers such as fungi, as they often form symbiotic relationships with plants as nitrogen fixers [@kakoi_isolation_2014].
+
+Interestingly, for a long time Actinomycetota colonies were believed to be fungi as they form extensive mycelia. This is how they were actually named (myc being derived from the Greek "myket" for "mushroom") [@buchanan_studies_1917]. 
+
+Certain Actinomycetota are important members of the human microbiome. In fact, the genus Bifidobacterium are the most common bacteria in the human infant microbiome [@turroni_diversity_2012]. In the intestines, bifidobacteria help maintain the mucosal barrier and play a key role in reduction of inflammation by reducing lipopolysacharides in the GI tract [@pinzone_microbial_2012].
+
+Actinobacteria are also relevant to human disease. Some members of the genus Mycobacterium, for instance, are pathogenic and are the cause of diseases such as tuberculosis, leprosy, diptheria, vaginosis, and others [@lewin_evolution_2016]. Still others from the genus Steptomyces are a major source of common antibiotics used in medicine [@de_lima_procopio_antibiotics_2012].
+
+# Methods
+
+Data tables containing sequencing, site information, metagenomonic, and soil chemistry data sets from NEON were downloaded from the Integrated Microbial Genomes (IMG) database. These data were analyzed using various R packages to identify site-specific taxa representation, as well as a focus on one specific phylum (Actinobaxteriota). Code remains shown in this report so results may be easily replicated.
+
