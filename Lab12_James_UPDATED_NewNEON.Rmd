@@ -1,0 +1,388 @@
+---
+title: "Lab12_James,Rmd"
+author: "James Forster III"
+date: "2024-04-08"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+    theme: cerulean 
+    highlight: monochrome
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(knitr)
+library(DT)
+library(readr)
+library(ggtree)
+library(treeio)
+library(ggimage)
+library(rphylopic)
+```
+
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_2024_4_21.csv") %>% 
+  # remove columns that are not needed for data analysis
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`, `Bin Lineage`)) %>% 
+  # create a new column with the Assembly Type
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "d__", "") %>%  
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "p__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "c__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "o__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "f__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "g__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "s__", "") %>%
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), ";", remove = FALSE) %>% 
+  mutate_at("Domain", na_if,"") %>% 
+  mutate_at("Phylum", na_if,"") %>% 
+  mutate_at("Class", na_if,"") %>% 
+  mutate_at("Order", na_if,"") %>% 
+  mutate_at("Family", na_if,"") %>% 
+  mutate_at("Genus", na_if,"") %>% 
+  mutate_at("Species", na_if,"") %>% 
+  
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "S-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+
+```
+```{r}
+NEON_metagenomes <- read_tsv("data/exported_img_data.tsv") %>% 
+  rename(`Genome Name` = `Genome Name / Sample Name`) %>% 
+  filter(str_detect(`Genome Name`, 're-annotation', negate = T)) %>% 
+  filter(str_detect(`Genome Name`, 'WREF plot', negate = T)) 
+
+
+NEON_metagenomes <- NEON_metagenomes %>% 
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+```{r}
+NEON_chemistry <- read_tsv("data/neon_plot_soilChem1_metadata.tsv") %>% 
+  # remove -COMP from genomicsSampleID
+  mutate_at("genomicsSampleID", str_replace, "-COMP", "") 
+```
+
+```{r}
+kable(
+  NEON_chemistry_description <- read_tsv("data/neon_soilChem1_metadata_descriptions.tsv") 
+)
+```
+# Tidyverse Examples 
+
+```{r}
+band_members
+
+band_instruments
+```
+```{r}
+band_members %>% 
+  left_join(band_instruments, by = "name")
+```
+```{r}
+band_members %>% 
+  right_join(band_instruments, by = "name")
+```
+```{r}
+band_members %>% 
+  inner_join(band_instruments, by = "name")
+```
+```{r}
+band_members %>% 
+  full_join(band_instruments, by = "name")
+```
+
+But Keith is in the Stones!! This data set is wrong! 
+
+```{r}
+table1
+table3
+
+table1 %>% 
+  left_join(table3, by = c("country", "year"))
+```
+```{r}
+band_members %>% 
+  left_join(band_instruments2, by = c(name = "artist"))
+```
+```{r}
+table4a %>% 
+  left_join(table4b, by = "country")
+```
+```{r}
+table4a %>% 
+  left_join(table4b, by = "country", suffix = c("_cases", "_pop"))
+```
+
+
+
+
+
+
+# Exercise 1
+
+```{r}
+NEON_MAGs_E1 <- NEON_MAGs %>% 
+  select(`Sample Name`, `Site ID`, `GTDB-Tk Taxonomy Lineage` )
+
+NEON_metagenomes_E1 <- NEON_metagenomes %>% 
+  select(`Sample Name`, `Site ID`, `Ecosystem Subtype`)
+
+NEON_chemistry_E1 <- NEON_chemistry %>% 
+  select(genomicsSampleID, siteID, nlcdClass) %>% 
+  rename('Site ID' = `siteID`)
+
+```
+
+# Exercise 2 
+
+```{r}
+NEON_MAGs_E2 <- NEON_MAGs_E1 %>% 
+  filter(`Site ID`== "CLBJ") 
+
+
+NEON_metagenomes_E2 <- NEON_metagenomes_E1 %>% 
+  filter(`Site ID`== "CLBJ") 
+
+
+NEON_chemistry_E2 <- NEON_chemistry_E1 %>% 
+  filter(`Site ID`== "CLBJ") 
+
+
+```
+
+# Exercise 3 
+
+```{r}
+NEON_MAGs_E2 %>% 
+  left_join(NEON_metagenomes_E2, by = "Sample Name") %>% 
+datatable()
+```
+
+And if we do the reverse left join we get the same result:
+
+```{r}
+NEON_metagenomes_E2 %>% 
+  left_join(NEON_MAGs_E2, by = "Sample Name") %>% 
+datatable()
+```
+
+Overall, we get the expected number of rows and columns, except for the fact that repeated columns from both sheets are for some reason duplicated, shown as x, y, and z, leading me to have to manually remove the repeated columns down below in the later Exercises. Get your stuff together R! 
+
+# Exercise 4 
+
+```{r}
+NEON_metagenomes_E2 %>% 
+  left_join(NEON_chemistry_E2, by = c(`Sample Name` = "genomicsSampleID")) %>% 
+datatable()
+```
+Overall we have much less columns when we do a left join of the metagenomes and chemistry. However, this makes sense as the data tables are alot smaller for the metagenomes and chemistry data, as they display data for entire sites and samples, not for every single genome sampled for every species like in the MAGs data set, which is much much larger. In fact, NEON_metagenomes and NEON_chemistry, filtered in the way we have it, are each only 8 rows long.
+
+# Exercise 5 
+
+left join (as previous)
+
+right join: 
+
+```{r}
+NEON_metagenomes_E2 %>% 
+  right_join(NEON_chemistry_E2, by = c(`Sample Name` = "genomicsSampleID")) %>% 
+datatable()
+```
+full-join:
+
+```{r}
+NEON_metagenomes_E2 %>% 
+  full_join(NEON_chemistry_E2, by = c(`Sample Name` = "genomicsSampleID")) %>% 
+datatable()
+```
+
+
+It actually did not make any difference to the resultant table doing left join, right join or full join.
+
+
+# Exercise 6 
+
+```{r}
+NEON_chemistry_E2 %>% 
+  left_join(NEON_metagenomes_E2,by = c(`genomicsSampleID` = "Sample Name"), `Site ID`) %>% 
+datatable()
+```
+Yes, we got the expected number of rows and columns, in accordance with losing repeated columns or unmatched columns with left join 
+
+```{r}
+NEON_metagenomes_E2 %>% 
+  left_join(NEON_chemistry_E2, by = c("Sample Name" = "genomicsSampleID")) %>% 
+datatable()
+```
+
+We can see we get the same data if we do the reverse left join as well.
+
+# Exercise 7 
+
+```{r}
+NEON_MAGs_E7 <- NEON_MAGs  
+  
+NEON_metagenomes_E7 <- NEON_metagenomes  
+  
+NEON_chemistry_E7 <- NEON_chemistry %>% 
+  rename('Site ID' = `siteID`)
+
+NEON_metas_and_chemistry <- NEON_metagenomes_E7 %>% 
+  full_join(NEON_chemistry_E7,by = c(`Sample Name` = "genomicsSampleID"), `Site ID`)
+
+NEON_data_all <- NEON_metas_and_chemistry %>% 
+  full_join(NEON_MAGs_E7, by = "Sample Name")
+  
+NEON_data_full <- NEON_data_all %>% 
+  select(-`Site ID.y`, -`Site.y`, -`Subplot.y`, -`Layer.y`, -`Date.y`, -`IMG Genome ID.y`) %>% 
+  select(-`Site ID.x`) %>% 
+  rename('Source of Sample' = `Domain.x`) %>% 
+  rename('Site' = `Site.x`, 'Subplot' = `Subplot.x`, 'Layer' = `Layer.x`, 'Date' = `Date.x`, 'IMG Genome ID' = `IMG Genome ID.x`)
+
+
+
+datatable(NEON_data_full)
+
+
+```
+
+
+After combining all the tables and doing a full join (so we don't lose any data) we see that for NEON combined assembly, we lose data shjown as NAs, such as sample name, subplot, layer, and date, which makes sense because these are combined assemblies.
+
+
+# Exercise 8
+
+```{r, fig.width = 9, fig.height = 5}
+NEON_E8 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota") %>% 
+filter(Site != "NEON combined assembly") 
+NEON_E8 %>% 
+ggplot(aes(x = soilTemp, y= `Site ID`)) +
+    geom_boxplot(outlier.shape = NA) +
+    labs(title = "Soil Temperature of Actinibacteriota Samples by Site", x = "Soil Temperature", y = "Site ID") +
+theme(axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5))+
+  coord_flip()
+
+```
+
+
+# Exercise 9
+
+```{r, fig.width = 10, fig.height = 7}
+NEON_E9 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota")  
+
+NEON_E9 %>% 
+ggplot(aes(x = soilTemp, y= `Ecosystem Subtype`)) +
+    geom_point(aes(color=Order)) +
+    labs(title = "Soil Temperature of Actinibacteriota Samples by Ecosystem Subtype, Colored by Order", x = "Soil Temperature", y = "Ecosystem Subtype") +
+theme(axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 0))+
+  coord_flip()
+```
+
+
+
+# Exercise 10
+
+```{r, fig.width = 12, fig.height = 7}
+NEON_E10 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota") %>% 
+filter(nlcdClass != "NA")
+NEON_E10 %>% 
+ggplot(aes(x =  soilInCaClpH, y= `nlcdClass`)) +
+    geom_point(aes(color=Family)) +
+    labs(title = "Actinobacteriota Soil Calcium Chloride pH by NLCD Classification, Colored by Family ", x = "Soil Calcium Chloride pH", y = "National Land Cover Database") +
+theme(axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 0),legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10))+
+  coord_flip()
+```
+
+
+
+# Exercise 11
+
+```{r, fig.width = 12, fig.height = 7}
+NEON_E11 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota")
+
+NEON_E11 %>% 
+ggplot(aes(x =  `elevation`, y= `Site ID`)) +
+    geom_point(aes(color=Class)) +
+    labs(title = "Actinobacteriota Elevation by Site, Colored by Class", x = "Elevation", y = "Site ID") +
+theme(axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 0),legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10))+
+  coord_flip()
+```
+
+# Exercise 12 
+
+```{r, fig.width = 12, fig.height = 7}
+NEON_E12 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota")
+
+NEON_E12 %>% 
+ggplot(aes(x =  `elevation`, y= `soilTemp`)) +
+    geom_point(aes(color=Site, shape=Class)) +
+    labs(title = "Elevation and Temperature for Actinobacteriota Samples ", x = "Elevation", y = "Soil Temperature") +
+theme(axis.text.x = element_text(size = 12, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 0),legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10))+
+  coord_flip()
+```
+
+
+
+# Exercise 13
+
+```{r, fig.width =10, fig.height =7}
+NEON_E13 <- NEON_data_full %>% 
+filter(Phylum == "Actinomycetota")
+
+NEON_E13 %>% 
+ggplot(aes(x =  `nitrogenPercent`, y= `elevation`)) +
+    geom_point(aes(color=Site, shape=Class)) +
+    labs(title = "Nitrogen Percentage by Elevation for Actinobacteriota", x = "Nitrogen Percentage", y = "Elevation") +
+theme(axis.text.x = element_text(size = 12, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 0),legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10))+
+  coord_flip()
+```
+
