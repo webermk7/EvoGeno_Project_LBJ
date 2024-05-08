@@ -1,0 +1,22 @@
+---
+title: "Discussion and Conclusion"
+author: "Jay English"
+date: "2024-05-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Discussion
+
+Using open-sourced high-performance computing techniques, we were able to extract useful information from genomic and metagenomic datasets from the National Ecological Observatory Network. By parsing and visualizing these data, we have demonstrated there's a host of information which is important for ecological, epidemiological, and medicinal purposes. For instance, these data demonstrate that possible pathogenic bacteria can be monitored and traced in a relatively simple manner. We have found that the power of these studies can yield insight into possible outbreaks and be useful for early warning and monitoring, although the sequencing depth could be improved to provide more accurate lower-level taxanomic identification. 
+
+We can also use these data to study the environment and adaptations of organisms in extreme conditions, such as Thermoleophilia. One can compare and contrast identification of organisms such as these with others found in more conventional environments to identify key differences in their prefered ecological niches. This can be important not only for identification and tracking purposes, but could provide useful predictive powers as to how bacteria might adapt to a changing climate where local temperatures and pH might fluctuate. 
+
+# Conclusion
+
+Here, we have demonstrated to usefulness of open, crowd-sourced data analysis of large datasets. Using data gathered from samples collected by scientists in the field, individuals with very little specialized training can utilize platforms such as R to perform analysis of such data which in the past may have taken decades to sift through by individual scientists or small scientific teams. Using crowd sourcing for data analysis can also overcome limitations of an individual's training by having data visualizations generated from an unbiased third party. 
+
+# References
