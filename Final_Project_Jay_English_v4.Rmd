@@ -163,12 +163,12 @@ There were many taxa found at the LBJ National grasslands. These can be visualiz
 ```{r, fig.width = 9, fig.height = 5}
 
 Project_MAGs_LBJ %>% 
-ggplot(aes(x = fct_rev(fct_infreq(Phylum)))) +
-    geom_bar(color = "cyan") +
+ggplot(aes(x = fct_rev(fct_infreq(Phylum)), fill = Class)) +
+    geom_bar() +
     labs(title = "Phylum Counts for MAGs at National Grasslands LBJ, Texas, USA", x = "Phylum", y = "Number of MAGs") +
 theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
                         axis.text.y = element_text(size = 15),
-                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 2))+
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .3))+
   coord_flip() 
 ```
 
@@ -219,6 +219,8 @@ NEON_MAGs_metagenomes_chemistry <- NEON_MAGs %>%
   full_join(NEON_metagenomes, by = "Sample Name") %>% 
   full_join(NEON_chemistry, by = c("Sample Name" = "genomicsSampleID")) %>% 
   rename("label" = "Bin ID")
+
+view(NEON_MAGs_metagenomes_chemistry)
 ```
 
 A useful way for visualizing taxonomic information are phylogenetic trees. We will use these, overlayed with metadata, to parse through these taxa.
@@ -418,3 +420,283 @@ datatable(quality)
 ```
 
 Both high-quality unidentified reads are found from the same subplot in Watershed, Alaska. To ensure safeguards and early detection of possible pathogenic sources, more samples should be gathered from this location for increased sequencing depth.
+
+
+
+
+
+# James Materials 
+
+General Visualization of Actinomycetota 
+
+
+```{r, fig.width = 13, fig.height = 5}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Class)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Class (Colored by Site)", x = "Class", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+```{r, fig.width = 13, fig.height = 5}
+Project_MAGs %>%
+  filter(Phylum == "Actinobacteriota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Order)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Order (Colored by Site)", x = "Order", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+  filter(`Site ID.x` != "NA") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(`Site ID.x`)), fill = nlcdClass)) +
+  labs(title = "Abundance of Actinomycetota by Site, Colored by nlcdClass", x = "Site ID", y = "Number of MAGs") +
+  geom_bar() +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5), legend.position = "bottom") 
+
+```
+
+
+Entire NEON bacteria tree highlighting the Actinomycetota phylum
+
+```{r, fig.width = 12, fig.height = 12}
+ggtree(tree_bac, layout="circular", branch.length="none") +
+    geom_hilight(node=1789, fill="darkviolet", alpha=.6) +
+    geom_cladelab(node=1789, label="Actinomycetota", align=TRUE,  
+                  offset = .5, textcolor='darkviolet', fontsize = 8)
+```
+Class phylogenetics at all NEON sites for Actinomycetota 
+
+```{r, fig.width = 12, fig.height = 12}
+ggtree(tree_Actinomycetota, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry + 
+  xlim(0,25) +
+  geom_point(mapping=aes(color=Class, shape = `Assembly Type`)) +
+  theme(legend.text = element_text(size = 12))
+```
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(!is.na(Class))
+
+
+MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_Actino$label
+
+tree_bac_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Class))
+```
+Checking the ecosystem subtype of the MAGs in Actinomycetota:
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(!is.na(`Ecosystem Subtype`))
+
+
+MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_Actino$label
+
+tree_bac_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=`Ecosystem Subtype`))
+```
+Zooming in on our site, CLBJ, showing phylum genetics:
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ")
+
+NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria")
+
+
+CLBJ_MAGs_label <- NEON_MAGs_metagenomes_chemistry_CLBJ$label
+
+tree_bac_CLBJ_MAGs <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Phylum))
+```
+Zoom in on Actinomycetota phylum
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Class)) 
+```
+Assess the order of the Actinomycetota MAGs at CLBJ: 
+
+```{r}
+
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Order)) 
+```
+
+Focus in on Thermoleophilia: 
+
+
+At all NEON sites (focus in on Miltoncostaelaes as a novel and recently foud order of thermoleophilia )
+
+```{r}
+ggtree(tree_Thermoleophilia, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry + 
+  xlim(0,25) +
+  geom_point(mapping=aes(color=Order, shape = `Assembly Type`))+
+  theme(legend.text = element_text(size = 12))
+```
+
+
+Now zoom in on CLBJ: 
+
+```{r}
+
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Order)) 
+```
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Family)) 
+```
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Genus))
+```
+
+
+NEON Chemistry Analysis 
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilTemp, fill=Class )) +
+  labs(title = "Soil Temperatuer of Actinomycetota, Faceted by Class", x = "Soil Temperature", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+  
+```
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilInWaterpH, fill=Class )) +
+  labs(title = "Water pH of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+```{r, fig.width =11, fig.height =8}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=elevation, fill=`Site ID.x` )) +
+  labs(title = "Elevation of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+
+Talk about unique class UBA4738 and how it is primarily found in high pH environments compared to the rest of the classes
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilInWaterpH, fill=Class )) +
+  labs(title = "Water pH of Actinomycetota", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5), legend.position = "bottom") +
+  annotate("rect", xmin = 5.3, xmax = 9.3, ymin = -.5, ymax = 10.3, 
+           fill = NA, color = "black", size = 1.2)
+```

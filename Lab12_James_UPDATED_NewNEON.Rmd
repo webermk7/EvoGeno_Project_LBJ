@@ -397,10 +397,15 @@ ggplot(aes(x=soilTemp, fill=Class )) +
   geom_histogram(bins = 25) +
   theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
                         axis.text.y = element_text(size = 12),
-                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = 1), legend.position = "bottom") +
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
 facet_wrap(vars(Class), scales = "free", ncol = 2)
   
 ```
+
+
+
+
+
 
 ```{r, fig.width =10, fig.height =7}
 NEON_data_full %>% 
@@ -427,12 +432,28 @@ ggplot(aes(x=soilInWaterpH, fill=Class )) +
 facet_wrap(vars(Class), scales = "free", ncol = 2)
 ```
 
+
 ```{r, fig.width =10, fig.height =7}
 NEON_data_full %>% 
   filter(Phylum == "Actinomycetota") %>% 
   filter(Class != "NA") %>% 
-ggplot(aes(x=soilInWaterpH, fill=`Site ID` )) +
+ggplot(aes(x=soilInWaterpH, fill=Class )) +
   labs(title = "Water pH of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+
+
+```{r, fig.width =10, fig.height =7}
+NEON_data_full %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=elevation, fill=`Site ID` )) +
+  labs(title = "Elevation of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
   geom_histogram(bins = 25) +
   theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
                         axis.text.y = element_text(size = 12),
@@ -475,11 +496,11 @@ NEON_data_full %>%
   filter(Class != "NA") %>% 
   filter(Site != "NEON combined assembly") %>% 
 ggplot(aes(x = fct_rev(fct_infreq(`Site ID`)), fill = nlcdClass)) +
-  labs(title = "Soil Temperatuer of Actinomycetota, Faceted by Class", x = "Soil Temperature", y = "Number of MAGs") +
+  labs(title = "Abundance of Actinomycetota by Site, Colored by nlcdClass", x = "Site ID", y = "Number of MAGs") +
   geom_bar() +
   theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
                         axis.text.y = element_text(size = 12),
-                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = 1), legend.position = "bottom") 
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5), legend.position = "bottom") 
 
 ```
 
