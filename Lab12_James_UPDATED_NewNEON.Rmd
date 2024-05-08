@@ -469,5 +469,18 @@ ggplot(aes(x=soilInWaterpH, fill=Class )) +
   annotate("rect", xmin = 5.3, xmax = 9.3, ymin = -.5, ymax = 10.3, 
            fill = NA, color = "black", size = 1.2)
 ```
+```{r, fig.width =10, fig.height =7}
+NEON_data_full %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(`Site ID`)), fill = nlcdClass)) +
+  labs(title = "Soil Temperatuer of Actinomycetota, Faceted by Class", x = "Soil Temperature", y = "Number of MAGs") +
+  geom_bar() +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = 1), legend.position = "bottom") 
+
+```
 
 
