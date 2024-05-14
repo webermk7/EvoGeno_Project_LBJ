@@ -518,7 +518,11 @@ Both high-quality unidentified reads are found from the same subplot in Watershe
 
 # James Materials 
 
-General Visualization of Actinomycetota 
+##General Visualization of Actinomycetota 
+
+In this section, we will continue our analysis into the general characteristics and visualization of Actinomycetota bacteria, both in all of the NEON sites, as well as honed in on our specific site. We will put particular emphasis on analyzing the specific class and order of bacteria found at the different sites, some of their observed patterns, and interesting information about them.
+
+Below, we take another look at the sub-taxonomy of Actinomycetota into classes, and colored by site:
 
 
 ```{r, fig.width = 13, fig.height = 5}
@@ -534,6 +538,15 @@ theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
                         text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
   coord_flip() 
 ```
+
+Here we can see a few very interesting findings in the data. Firstly, Actnomycetota metagenomes appear in five different classes: Thermoleophilia, Actinomycetia, Acidimicrobiia, Rubrobacteria, and the elusive unnamed UBA4738. Particularly interesting is the relative scarcity of the Rubrobacteria class across all the NEON sites. Rubrobacteria is known as a thermophile, able to thrive in very high temperature environments (even above 70 degrees Celsius) (DOI: 10.1002/9781118960608.gbm01040), which could possibly explain their relative lack of abundance in the NEON data. We can look out for these extremophile characteristics of Rubrobacteria, as well as Thermoleophilia, in subsequent analyses.
+
+
+
+
+We can also see a further taxonomic breakdown into bacterial Orders colored by site below:
+
+
 ```{r, fig.width = 13, fig.height = 5}
 Project_MAGs %>%
   filter(Phylum == "Actinobacteriota") %>%
@@ -546,6 +559,9 @@ theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
                         text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
   coord_flip() 
 ```
+
+Below, we will begin our analysis into the NEON chemistry characteristics of the Actinomycetota MAGs at the sites, to get a better understanding of the conditions that the bacteria live and thrive in, as well as to find some intersting patterns in the data.
+
 ```{r, fig.width =10, fig.height =7}
 NEON_MAGs_metagenomes_chemistry %>% 
   filter(Phylum == "Actinomycetota") %>% 
@@ -560,8 +576,10 @@ ggplot(aes(x = fct_rev(fct_infreq(`Site ID.x`)), fill = nlcdClass)) +
 
 ```
 
+In the data set above, we color the abundance of Actinomycetota, labeled by class, by the nlcdClass, or environmental subtype. We can see that Actinomycetota are found in a variety of different environments, with the most abundant source of Actinomycetota, National Grasslands LBJ, being primarily a deciduous forest. We can see from the nclcd classes that, although there are many different ones, they have similar named characteristics, and are all a type of forest, scrub, or grassland.
 
-Entire NEON bacteria tree highlighting the Actinomycetota phylum
+
+Below we provide another visualization of the abundance of Actinomycetota at all the NEON sites. Immediately apparent is the enormous size of the phylum, making up more than 1/3 of all the NEON MAGs discoverd across all the NEON sites.
 
 ```{r, fig.width = 12, fig.height = 12}
 ggtree(tree_bac, layout="circular", branch.length="none") +
@@ -569,7 +587,10 @@ ggtree(tree_bac, layout="circular", branch.length="none") +
     geom_cladelab(node=1789, label="Actinomycetota", align=TRUE,  
                   offset = .5, textcolor='darkviolet', fontsize = 8)
 ```
-Class phylogenetics at all NEON sites for Actinomycetota 
+## Phylogenetic Analysis of Actinomycetota at All Sites
+
+Now, we will zoom in on Actinomycetota, analyzing the trees and digging into the class phylogenetics at all NEON sites: 
+
 
 ```{r}
 tree_bac_node_Actinomycetota <- Preorder(tree_bac)
@@ -588,6 +609,12 @@ ggtree(tree_Actinomycetota, layout="circular")  %<+%
   theme(legend.text = element_text(size = 12))
 ```
 
+Here, we can see a circular tree view of the Actinommycetota phylum, with the nodes colored by the classes we had discussed earlier. In this view, we can see that although there are 5 classes of Actinomycetota found at all sites, there are still a vast array of phylogenetic branches. By visualizing the tree, we can determine where exactly two phylogentic examples of Actinomycetota from each class diverged.
+
+In this view, we can fully appreciate the relatively low abundance of Rubrobacteiria at the sites, seeing its complete divergence from the 4 other classes early in the tree's structure.
+
+Below we can see another view of the Class phylogeny of Actinomycetota in a circular tree: 
+
 ```{r}
 NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
   filter(Domain == "Bacteria") %>% 
@@ -603,7 +630,9 @@ ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Class))
 ```
-Checking the ecosystem subtype of the MAGs in Actinomycetota:
+
+
+To get more information from this tree, we can also color the nodes by Ecosystem subtype, emphasizing the abundacne of Actinomycetota in grasslands, shrublands, and forests. However, there are some examples of Tundra, Desert, and Taiga MAGs as well.
 
 ```{r}
 NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
@@ -620,7 +649,10 @@ ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=`Ecosystem Subtype`))
 ```
-Zooming in on our site, CLBJ, showing phylum genetics:
+
+## National Grasslands LBJ, and Actinomycetota
+
+Now, lets briefly take a break from analyzing Actinomycetota at all sites, and zoom in on National Grasslands LBJ, or CLBJ. We. will begin, as previously, by assessing the phylogenetic tree.
 
 ```{r}
 NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
@@ -639,7 +671,22 @@ ggtree(tree_bac_CLBJ_MAGs, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Phylum))
 ```
-Zoom in on Actinomycetota phylum
+```{r, fig.width = 13, fig.height = 5}
+NEON_MAGs %>%
+  filter(Site != "NEON combined assembly") %>% 
+  filter(`Site ID` == "CLBJ") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Phylum)), fill = Class)) +
+    geom_bar() +
+    labs(title = "Bacteria MAGs at National Grasslands LBJ" , x = "Phylum", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+We can see from the tree and bargraph above that, although a very diverse site, Actinomycetota is the most abundant phylum of bacteria found at CLBJ.
+
+As we did in with the Actinomycetota data set from all the sites, we can zoom in on the phylum at CLBJ only, to provide a phylogenetic analysis: 
+
 
 ```{r}
 NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
@@ -656,7 +703,9 @@ ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Class)) 
 ```
-Assess the order of the Actinomycetota MAGs at CLBJ: 
+We can see that, from the tree, Thermoleophilia and Actinomycetia are the two most abundant classes of Actinomycetota at CLBJ. Interesting to note is that although there are Rubrobacteria examples in the entire NEON data, none of them are found at CLBJ. However, we still see the elusive Class UBA4738, of which there is very little published information. We can now go further down the phylogenetic tree to assess the Order of the Actinomycetota bacteria found at CLBJ: 
+
+
 
 ```{r}
 
@@ -674,11 +723,14 @@ ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Order)) 
 ```
+In the above tree, we can see that there is only a single phylogenetic group of the order Actinomycetales found at CLBJ (shown in brown in the bottom of the tree). This bacterial order is particularly interesting and known for its ability to grow in long branches, similar in look to fungal growth (DOI: 10.3389/fmicb.2018.00477).
 
-Focus in on Thermoleophilia: 
 
 
-At all NEON sites (focus in on Miltoncostaelaes as a novel and recently foud order of thermoleophilia )
+
+## Thermoleophilia, an Interesting Class of Actinomycetota
+
+Now, we can delve deeper and focus on a specific class of interesting extremophile bacteria, Thermoleophilia. Thermoleophilia, as we showed in the earlier trees, is one of the most abundant classes of Actinomycetota, both site-wide and at CLBJ specifically. Below, we will assess the phylogenetics of Thermoleophilia: 
 
 ```{r}
 ggtree(tree_Thermoleophilia, layout="circular")  %<+%
@@ -688,6 +740,10 @@ ggtree(tree_Thermoleophilia, layout="circular")  %<+%
   theme(legend.text = element_text(size = 12))
 ```
 
+
+In the above tree, we get a comprehensive look at the Order of Thermoleophilia found across all NEON sites. Of particular interest is the extreme abundance of Solirubrobacterales, as well as only three divergent branches of the order Miltoncostaeales, which diverged from the order Gaiellales relatively late in the tree structure. Since there is very little published information on this order, it is probable that Miltoncostaeales only very recently was classified into a new order separate to that of Gaiellales. This is a testament to the rapidly changing and evolving field of metagenomics and bacterial phylogenetics. 
+
+We will now perform the same analysis focusing on CLBJ specifically: 
 
 Now zoom in on CLBJ: 
 
@@ -708,6 +764,9 @@ ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Order)) 
 ```
+At CLBJ, we only see the two orders Gaiellales and Solirubrobacterales. Now lets assess the families: 
+
+
 ```{r}
 NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
   filter(`Site ID.x` == "CLBJ") %>% 
@@ -724,6 +783,9 @@ ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Family)) 
 ```
+Another surprising scarcity is discovered; as there is only one phylogenetic branch dedicated to the family Thermoleophilaceae at CLBJ. Furthermore, there is another elusively named phylogeny of the 70-9 family, of which there is very little, if any, published information on. Now, lets zoom in on the Genus of the above examples: 
+
+
 ```{r}
 NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
   filter(`Site ID.x` == "CLBJ") %>% 
@@ -740,9 +802,13 @@ ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
   NEON_MAGs_metagenomes_chemistry +
   geom_point(mapping=aes(color=Genus))
 ```
+From this tree we can see that the single branch of the family Thermoleophilaceae is of the genus Conexibacter.
 
+## NEON Chemistry Analysis of Actinomycetota 
 
-NEON Chemistry Analysis 
+We will wrap up our analysis of Actinomycetota NEON MAGs by assessing some patterns in the phylogenes with regards to physical and chemical conditions in the NEON chemistry data.
+
+First, we will assess the effect of soil temperature on the abundance of Actinomycetota at all sites, faceted by class: 
 
 ```{r, fig.width =10, fig.height =7}
 NEON_MAGs_metagenomes_chemistry %>% 
@@ -758,6 +824,12 @@ facet_wrap(vars(Class), scales = "free", ncol = 2)
   
 ```
 
+There are a few intersting findings in this data set. Firstly, we see that the class Acidimicrobiia preferentially is found in colder climates, indicative of the peak in MAG numbers around 10 degrees Celsius. Next, we see that, although not abundant, Rubrobacteria align with its thermophile characteristics with a peak in MAG numbers in the higher range of the temperatures measured. Although not close to the max temperature of thermophiles, it is an interesting finding that follows the expected patterns. Finally, we see that a larger portion of the class UBA4738 is found at higher temperatures, certainly compared to the relative abundance of the classes Thermoleophilia, Actinomycetia, and Acidimicrobiia, which prefer more moderate temperatures in the 10-20 degree Celsius range.
+
+
+Now, we will assess pH differences in the MAGs found in Actinomycetota: 
+
+
 ```{r, fig.width =10, fig.height =7}
 NEON_MAGs_metagenomes_chemistry %>% 
   filter(Phylum == "Actinomycetota") %>% 
@@ -771,21 +843,9 @@ ggplot(aes(x=soilInWaterpH, fill=Class )) +
 facet_wrap(vars(Class), scales = "free", ncol = 2)
 ```
 
-```{r, fig.width =11, fig.height =8}
-NEON_MAGs_metagenomes_chemistry %>% 
-  filter(Phylum == "Actinomycetota") %>% 
-  filter(Class != "NA") %>% 
-ggplot(aes(x=elevation, fill=`Site ID.x` )) +
-  labs(title = "Elevation of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
-  geom_histogram(bins = 25) +
-  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
-                        axis.text.y = element_text(size = 12),
-                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
-facet_wrap(vars(Class), scales = "free", ncol = 2)
-```
+Here, we can determine that the mysterious class UBA4738, while also preferring higher temperatures, also is more abundant at high pH values as well. This may suggest UBA4738 as a novel thermophile class, however, more data and study into this class is needed to confirm this. 
 
-
-Talk about unique class UBA4738 and how it is primarily found in high pH environments compared to the rest of the classes
+Let's now compare all the classes of Actinomycetota on one graph and assess the pH differneces: 
 
 ```{r, fig.width =10, fig.height =7}
 NEON_MAGs_metagenomes_chemistry %>% 
@@ -800,6 +860,28 @@ ggplot(aes(x=soilInWaterpH, fill=Class )) +
   annotate("rect", xmin = 5.3, xmax = 9.3, ymin = -.5, ymax = 10.3, 
            fill = NA, color = "black", size = 1.2)
 ```
+Above, we clearly see the preferential finding of UBA4738 in more basic environments, with no examples being found below pH 5, compared to four of the other classes being found in high numbers below this pH value.
+
+
+
+
+Finally, we will take one more NEON chemistry visualization of Actinomycetota at all sites, assessing the effect of elevation. While there arent too many trends to find from this data, we get an idea of the relative abundance of each class at different elevations and different sites, which may be of use in the future as more MAGs are generated.
+
+
+```{r, fig.width =11, fig.height =8}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=elevation, fill=`Site ID.x` )) +
+  labs(title = "Elevation of Actinomycetota, Faceted by Class", x = "Elevation", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+
 
 # Discussion
 

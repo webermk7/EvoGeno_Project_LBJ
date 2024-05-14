@@ -184,6 +184,7 @@ Interestingly, actinobacteriota is found most predominantly at National Grasslan
 Project_MAGs %>%
   filter(Phylum == "Actinobacteriota") %>%
   filter(Site != "NEON combined assembly") %>% 
+  filter(Class != "NA") %>% 
 ggplot(aes(x = fct_rev(fct_infreq(Class)), fill = Site)) +
     geom_bar() +
     labs(title = "Sub Taxonomy of Actinobacteriota, Class (Colored by Site)", x = "Class", y = "Number of MAGs") +
