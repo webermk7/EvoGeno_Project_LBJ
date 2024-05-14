@@ -1,0 +1,932 @@
+---
+title: "Final_Project_Jay_English"
+author: "Jay English"
+date: "2024-05-03"
+bibliography: LBJ_Project.bib
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: spacelab
+    highlight: breezedark
+---
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(ggtree)
+library(TDbook) 
+library(ggimage)
+library(rphylopic)
+library(treeio)
+library(tidytree)
+library(ape)
+library(TreeTools)
+library(phytools)
+library(ggnewscale)
+library(ggtreeExtra)
+library(ggstar)
+library(tidyverse)
+library(knitr)
+library(DT)
+library(plotly)
+library(scales)
+library(ggeasy)
+```
+
+# Abstract
+
+There are a diverse array of microorganisms found across Earth, and they play a vital role in various ecosystems. There is an ongoing effort in the microbiologist community to find, classify, and study these microorganisms, both to determine their importance in ecology and to monitor for any possible pathogenic outbreaks. Although there has been a surge in data related to microbiotic research, finding ways to take these large datasets and analyze them in a meaningful way has been challenging. Here, we present analysis of newly-deposited data from the National Ecological Observatory Network (NEON) using open-source packages in R.
+
+# Motivating Reasons
+
+Studying microbial organisms is beneficial for many reasons. Much of modern medicine is owed to the study of these branches of life, as antibiotics are naturally found throughout the microbial universe as these organisms evolve to compete with one another. As such, studying microbes in their natural environment directly benefits mankind. Also important is the ecology of these organisms. Humans are not ecologically isolated; our actions change the environment, which can have an impact to organisms throughout the tree of life. As the environment changes, microorganism populations may change in response. This may not only impact our ability to study them for medicinal purposes, but may also change the frequency and location of pathogenic outbreaks detrimental to societies. As such, monitoring of microbial life can provide predictive power for coming outbreaks, allowing governments to prepare and react quickly to disease outbreaks. Both ecological and microbial studies, however, generate large amounts of data which can be difficult to parse. 
+
+With advances in computing, languages have been simplified and programs have been developed to make studying large data sets easier. Open-source languages such as R help to bridge the gap between computer science, which focuses on programming to handle data efficiently, and biology, which generates data from raw samples and experimentation. Using these tools, bioinformaticists seek to yield actionable results from unyieldingly large sets of data. Scientists are increasingly sharing the data they generate into large databases, which provide an ample pool to study with bioinformatic techniques. In this project, we have analyzed one such data set from NEON to identify the microbiome represented at one site in Texas, the Lyndon B. Johnson National Grasslands, and to hone in specifically on Actinomycetota, a large, diverse phylum of bacteria with many medicinal and pathogenic uses.
+
+# Introduction
+
+## The Lyndon B. Johnson National Grassland
+
+<center>
+![A Texas Sunset over the LBJ National Grasslands.  Credits: Pam LeBlanc photo](LBJ.jpg)
+<center>
+
+Long through history, the lands that would become the LBJ National Grasslands were favorite hunting grounds for native tribes such as the Cherokee, Creek, Seminole, Waco, and Kickapood [@dferriero_importance_2021]. In fact, the earliest discovered human artifacts in North America, namely remains of animals, seeds, and various others were discovered not far from this region [@noauthor_fort_nodate; @noauthor_human_2023].
+
+In the 1700s and 1800s, the Comanche commanded this region after aquiring horses and beginning a nomadic war tribe-like lifestyle [noauthor_fort_nodate; @association_comanche_nodate]. In 1843, negotiations between these and other tribes with the likes of Sam Houston's deligate generals, Edward J. Tarrant and George W. Terrell saw the natives relocated to territory west of a line through the future site of Fort Worth, giving this town its famous slogan "Where the West Begins"... Not because of its cowboy culture, but rather because this is what the line was referred to as. The second president of Texas, Mirabeau Lamar, did not recognize these treaties for peace, and called for the "total extinction or total repulsion" of the natives as white settlement in the region expanded [noauthor_human_2023; @noauthor_native_nodate].
+
+Ranching has always been historically associated with Texas, and Fort Worth was home to some of the largest cattle trades in the world. Ranchers would drive their cattle from throughout the Great Plains to be sold or traded at the Fort Worth stockyard [@noauthor_home_nodate].
+
+As such, the grasslands surrounding Fort Worth became essential grazing lands along the final legs of cattle drives. The approximately 20,250 acres surrounding Black Creek Lake Northwest of Fort Worth was soon worked extensively by cattle drivers and homesteaders alike. With a steady influx of homesteaders across the great plains, land mismanagement become a major problem, eventually culminating in the dust bowl, which devestated the natural resources of the region [@noauthor_human_2023]. 
+
+President Hoover then began researching agricultural remedies, and his successor, Franklin D. Roosevelt ended land giveaways and began federal management of certain natural lands, including these regions. With well-placed fencing, rotation, and grazing restrictions, vegetation returned to the region around mid-century [@noauthor_human_2023].
+
+Today, the LBJ National Grasslands are federally managed multiple-use areas. They are protected from being developed or plowed, but still allow limited drilling for the oil and gas industry, grazing for ranching, hunting, camping, and general tourism [@noauthor_national_nodate]. 
+
+##  Actinomycetota
+
+<center>
+![Scanning Electrom Micrograph of Actinomyes israelii](Actinobacteria.jpg)
+<center>
+
+Actinobacteria, refered to as Actinomycetota in these data, are diverse, gram positive bacteria found in both aquatic and terrestrial environments [@servin_evidence_2008]. In soil, they are decomposers of organic matter and play a key role in the carbon cycle. This niche is likely distinct from decomposers such as fungi, as they often form symbiotic relationships with plants as nitrogen fixers [@kakoi_isolation_2014].
+
+Interestingly, for a long time Actinomycetota colonies were believed to be fungi as they form extensive mycelia. This is how they were actually named (myc being derived from the Greek "myket" for "mushroom") [@buchanan_studies_1917]. 
+
+Certain Actinomycetota are important members of the human microbiome. In fact, the genus Bifidobacterium are the most common bacteria in the human infant microbiome [@turroni_diversity_2012]. In the intestines, bifidobacteria help maintain the mucosal barrier and play a key role in reduction of inflammation by reducing lipopolysacharides in the GI tract [@pinzone_microbial_2012].
+
+Actinobacteria are also relevant to human disease. Some members of the genus Mycobacterium, for instance, are pathogenic and are the cause of diseases such as tuberculosis, leprosy, diptheria, vaginosis, and others [@lewin_evolution_2016]. Still others from the genus Steptomyces are a major source of common antibiotics used in medicine [@de_lima_procopio_antibiotics_2012].
+
+# Methods
+
+Data tables containing sequencing, site information, metagenomonic, and soil chemistry data sets from NEON were downloaded from the Integrated Microbial Genomes (IMG) database. These data were analyzed using various R packages (listed below) to identify site-specific taxa representation, as well as a focus on one specific phylum (Actinobaxteriota). Code remains shown in this report so results may be easily replicated.
+
+
+<center>
+
+Packages utilized:
+
+tidyverse
+knitr
+DT
+plotly
+scales
+ggeasy
+ggtree
+TDbook
+ggimage
+rphylopic
+treeio
+tidytree
+ape
+TreeTools
+phytools
+ggnewscale
+ggtreeExtra
+ggstar
+
+<center>
+
+# Results
+
+## Actinomycetota distribution across all sites
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_2024_4_21.csv") %>% 
+  # remove columns that are not needed for data analysis
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`, `Bin Lineage`)) %>% 
+  # create a new column with the Assembly Type
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "d__", "") %>%  
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "p__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "c__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "o__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "f__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "g__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "s__", "") %>%
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), ";", remove = FALSE) %>% 
+  mutate_at("Domain", na_if,"") %>% 
+  mutate_at("Phylum", na_if,"") %>% 
+  mutate_at("Class", na_if,"") %>% 
+  mutate_at("Order", na_if,"") %>% 
+  mutate_at("Family", na_if,"") %>% 
+  mutate_at("Genus", na_if,"") %>% 
+  mutate_at("Species", na_if,"") %>% 
+  
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "S-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+
+```{r} 
+
+# Filter all other classes besides ours
+actino <- NEON_MAGs %>% 
+  filter(Phylum == "Actinomycetota")
+
+```
+
+```{r}
+actino %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Site)), fill = Class)) +
+  geom_bar(position = position_dodge2(width = 0.5, preserve = "single")) +
+ theme(legend.position = "bottom") +
+  theme(legend.justification = "left") +
+  theme(legend.key.size = unit( 0.1, 'cm')) +
+  theme(legend.key.height = unit(0.1, 'cm')) +
+  theme(legend.key.width = unit(0.1, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 4, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 4)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(10, 10, 10, 10)) +
+  theme(legend.box.just = "left") +
+  theme( axis.text.x = element_text(size = 6)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_x_discrete(labels = wrap_format(50)) +
+  scale_y_continuous(n.breaks = 12) +
+  theme(axis.text.y = element_text(size = 3)) +
+  xlab("Site") +
+  ylab("Count") +
+  labs(title = str_wrap("Number of Actinobateriota Classes at each Site", width = 30)) +
+  ggeasy::easy_center_title() +
+  coord_flip() 
+```
+
+```{r, fig.width = 13, fig.height = 10}
+NEON_MAGs %>%
+  filter(Phylum == "Actinomycetota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Family)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Family (Colored by Site)", x = "Family", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+```{r}
+actino %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Site)), fill = Genus)) +
+  geom_bar(position = position_dodge2(width = 0.5, preserve = "single")) +
+  guides(fill = guide_legend(ncol = 3)) +
+  theme(legend.justification = "top") +
+  theme(legend.position = "left") +
+  theme(legend.key.size = unit( 0.1, 'cm')) +
+  theme(legend.key.height = unit(0.1, 'cm')) +
+  theme(legend.key.width = unit(0.1, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 2, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 2)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(4, 4, 4, 4)) +
+  theme(legend.box.just = "left") +
+  theme( axis.text.x = element_text(size = 4, angle = 90)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  theme(axis.title = element_text(size = 5)) +
+  theme(axis.text.y = element_text(size = 4)) +
+  scale_x_discrete(labels = wrap_format(40)) +
+  scale_y_continuous(limits = c(0, 20)) +
+  xlab("Site") +
+  ylab("Count") +
+  labs(title = str_wrap("Actinomycetota Genera at each Site", width = 30)) +
+  ggeasy::easy_plot_title_size(size = 8) +
+  ggeasy::easy_center_title()
+```
+
+```{r, fig.width = 13, fig.height = 5}
+NEON_MAGs %>%
+  filter(Phylum == "Actinomycetota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Order)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinobacteriota, Order (Colored by Site)", x = "Order", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+Here we see that our phylum (Actinomycetota) are widely distributed, with most of the classes represented at the LBJ National Grasslands. We can focus in on this site with some further visualizations.
+
+## Taxa Found at LBJ National Grasslands
+
+### Load in the MAGs and clean up nomenclature conventions.
+
+```{r}
+NEON_MAGs <- read_csv("data/GOLD_Study_ID_Gs0161344_NEON_2024_4_21.csv") %>% 
+  # remove columns that are not needed for data analysis
+  select(-c(`GOLD Study ID`, `Bin Methods`, `Created By`, `Date Added`, `Bin Lineage`)) %>% 
+  # create a new column with the Assembly Type
+  mutate("Assembly Type" = case_when(`Genome Name` == "NEON combined assembly" ~ `Genome Name`,
+                            TRUE ~ "Individual")) %>% 
+  mutate_at("Assembly Type", str_replace, "NEON combined assembly", "Combined") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "d__", "") %>%  
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "p__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "c__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "o__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "f__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "g__", "") %>% 
+  mutate_at("GTDB-Tk Taxonomy Lineage", str_replace, "s__", "") %>%
+  separate(`GTDB-Tk Taxonomy Lineage`, c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), ";", remove = FALSE) %>% 
+  mutate_at("Domain", na_if,"") %>% 
+  mutate_at("Phylum", na_if,"") %>% 
+  mutate_at("Class", na_if,"") %>% 
+  mutate_at("Order", na_if,"") %>% 
+  mutate_at("Family", na_if,"") %>% 
+  mutate_at("Genus", na_if,"") %>% 
+  mutate_at("Species", na_if,"") %>% 
+  
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "S-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-") 
+```
+
+### Filter for phyla at LBJ
+
+```{r}
+Project_MAGs_LBJ <- NEON_MAGs %>% 
+  filter(`Site ID` == "CLBJ")
+```
+
+There were many taxa found at the LBJ National grasslands. These can be visualized using a variety of approaches. First, it is useful to get a simple overview of the representation of various phyla using a bar graph.
+
+```{r, fig.width = 9, fig.height = 5}
+
+Project_MAGs_LBJ %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Phylum)), fill = Class)) +
+    geom_bar() +
+    labs(title = "Phylum Counts for MAGs at National Grasslands LBJ, Texas, USA", x = "Phylum", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 15),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .3))+
+  coord_flip() 
+```
+
+Here, we see that by far the most represented phylum is our phylum, Actinomycetota. The next most represented phylum is Acidobacteriota, which might tell us something about the soil properties at LBJ. We can dig a little bit deeper into this by also looking at the soil chemistry of LBJ.
+
+### Load relevant tables
+
+Remove the re-annotation and WREF plot samples from the data set previously exported from IMG
+
+```{r}
+NEON_metagenomes <- read_tsv("data/exported_img_data.tsv") %>% 
+  select(-c(`Domain`, `Sequencing Status`, `Sequencing Center`)) %>% 
+  rename(`Genome Name` = `Genome Name / Sample Name`) %>% 
+  filter(str_detect(`Genome Name`, 're-annotation', negate = T)) %>% 
+  filter(str_detect(`Genome Name`, 'WREF plot', negate = T)) 
+```
+
+Now reformat Genome Name as we did for the above MAG table.
+
+```{r}
+NEON_metagenomes <- NEON_metagenomes %>% 
+  # Get rid of the the common string "Soil microbial communities from "
+  mutate_at("Genome Name", str_replace, "Terrestrial soil microbial communities from ", "") %>% 
+  # Use the first `-` to split the column in two
+  separate(`Genome Name`, c("Site","Sample Name"), " - ") %>% 
+  # Get rid of the the common string "-comp-1"
+  mutate_at("Sample Name", str_replace, "-comp-1", "") %>%
+  # separate the Sample Name into Site ID and plot info
+  separate(`Sample Name`, c("Site ID","subplot.layer.date"), "_", remove = FALSE,) %>% 
+  # separate the plot info into 3 columns
+  separate(`subplot.layer.date`, c("Subplot", "Layer", "Date"), "-")
+```
+
+Finally, doing the same for the NEON soil chemistry table
+
+NEON Chemistry Data
+
+```{r}
+NEON_chemistry <- read_tsv("data/neon_plot_soilChem1_metadata.tsv") %>% 
+  # remove -COMP from genomicsSampleID
+  mutate_at("genomicsSampleID", str_replace, "-COMP", "") 
+```
+
+Now we'll join these tables together to be able to see the relationship between the MAGs and relevent metadata.
+
+```{r}
+NEON_MAGs_metagenomes_chemistry <- NEON_MAGs %>% 
+  full_join(NEON_metagenomes, by = "Sample Name") %>% 
+  full_join(NEON_chemistry, by = c("Sample Name" = "genomicsSampleID")) %>% 
+  rename("label" = "Bin ID")
+
+view(NEON_MAGs_metagenomes_chemistry)
+```
+
+A useful way for visualizing taxonomic information are phylogenetic trees. We will use these, overlayed with metadata, to parse through these taxa.
+
+First, the trees must be loaded.
+
+```{r}
+tree_arc <- read.tree("data/gtdbtk.ar53.decorated.tree")
+tree_bac <- read.tree("data/gtdbtk.bac120.decorated.tree")
+```
+
+Next, we'll filter our merged table for MAGs found at LBJ 
+
+In this report, we'll largely focus on Bacteria, although Archaea are represented in the data. So now, we'll filter for just Bacteria.
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria")
+```
+
+```{r}
+# Create a label object
+CLBJ_MAGs_label <- NEON_MAGs_metagenomes_chemistry_CLBJ$label
+```
+
+```{r}
+# Create a raw tree 
+
+tree_bac_CLBJ_MAGs <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_label, tree_bac$tip.label)])
+```
+
+```{r}
+# Visualize the tree
+
+ggtree(tree_bac_CLBJ_MAGs, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Phylum))
+```
+
+Here, we present a different way of visualizing not only the taxa found at LBJ, but also their relatedness to eachother.
+
+This sankey plot provides taxonomic information from coassemblies from all Actinomycetota taxa.
+
+```{r}
+knitr::include_url("sankey-NEON_MAG_co_actino_all_taxa_pavian.txt.html")
+```
+
+We can make a similar, circular tree with multiple layers of data as well.
+
+Filter blanks from table
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_noblank_CLBJ <- NEON_MAGs_metagenomes_chemistry_CLBJ %>% 
+  rename("AssemblyType" = "Assembly Type") %>% 
+  rename("BinCompleteness" = "Bin Completeness") %>% 
+  rename("BinContamination" = "Bin Contamination") %>% 
+  rename("TotalNumberofBases" = "Total Number of Bases") %>% 
+  rename("EcosystemSubtype" = "Ecosystem Subtype")
+```
+
+
+```{r, fig.height=50, fig.width=50}
+ggtree(tree_bac_CLBJ_MAGs, layout="circular", branch.length="none") %<+% 
+  NEON_MAGs_metagenomes_chemistry_CLBJ + 
+  geom_point2(mapping=aes(color=`Phylum`, size=`Gene Count`)) + 
+  new_scale_fill() + 
+  geom_fruit(
+      data=NEON_MAGs_metagenomes_chemistry_noblank_CLBJ,
+      geom=geom_tile,
+      mapping=aes(y=label, x=1, fill= AssemblyType),
+      offset=0.08,   # The distance between external layers, default is 0.03 times of x range of tree.
+      pwidth=0.25 # width of the external layer, default is 0.2 times of x range of tree.
+      ) + 
+  new_scale_fill() +
+  geom_fruit(
+          data=NEON_MAGs_metagenomes_chemistry_noblank_CLBJ,
+          geom=geom_col,
+          mapping=aes(y=label, x=TotalNumberofBases),  
+          pwidth=0.4,
+          axis.params=list(
+                          axis="x", # add axis text of the layer.
+                          text.angle=-45, # the text size of axis.
+                          hjust=0  # adjust the horizontal position of text of axis.
+                      ),
+          grid.params=list() # add the grid line of the external bar plot.
+      ) + 
+      theme(#legend.position=c(0.96, 0.5), # the position of legend.
+          legend.background=element_rect(fill=NA), # the background of legend.
+          legend.title=element_text(size=7), # the title size of legend.
+          legend.text=element_text(size=6), # the text size of legend.
+          legend.spacing.y = unit(0.02, "cm")  # the distance of legends (y orientation).
+      ) +
+  easy_plot_legend_size(20) +
+  easy_plot_legend_title_size(20)
+```
+
+With this tree, we can easily compare the different phyla found at LBJ, along with their genome sizes. We can see that Actinomycetota have an extreme range of genetic diversity, with members having both very large and small genomes compared to other taxa, as well as a broad range of identified genes. We can also see that all data represented here comes from individual assemblies.
+
+## Mycobacterium
+
+One particular genus of Actinomycetota, mycobacterium, is most notorious for its species which causes the disease tuberculosis. However, there may be non-pathogenic species represented as well.
+
+### Filtering relevant taxa
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_myco <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Genus` == "Mycobacterium") %>% 
+  filter(Domain == "Bacteria")
+```
+
+Now we'll build the tree.
+
+```{r}
+# Create a label object
+myco_MAGs_label <- NEON_MAGs_metagenomes_chemistry_myco$label
+```
+
+```{r}
+# Create a raw tree 
+
+tree_bac_myco <-drop.tip(tree_bac,tree_bac$tip.label[-match(myco_MAGs_label, tree_bac$tip.label)])
+```
+
+```{r}
+# Visualize the tree
+
+ggtree(tree_bac_myco, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry_myco +
+  geom_point(mapping=aes(color=Species))
+```
+
+From this tree, we can see that there's not much data down to the species level. This may be because of incomplete reads, or not enough sequence depth to fully classify in that detail. We've also taken a look at the read qualities to try and discern what's going on.
+
+```{r}
+
+# Filter all other classes besides ours
+actino <- NEON_MAGs %>% 
+  filter(Phylum == "Actinomycetota")
+
+```
+
+Here is a datatable with the bin qualities of this genus' reads.
+
+```{r}
+quality <- 
+  actino %>% 
+  filter(Genus == "Mycobacterium") %>% 
+  count(`Bin Quality`, sort = TRUE)
+
+datatable(quality)
+```
+
+We can see here that there are only two high-quality reads. We can see which reads these are with a new table.
+
+```{r}
+
+actino_myco <- actino %>% 
+  filter(Genus == "Mycobacterium")
+
+actino_myco %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Species)), fill = `Bin Quality`)) +
+  geom_bar(position = position_dodge2(width = 0.5, preserve = "single")) +
+ theme(legend.position = "bottom") +
+  theme(legend.justification = "left") +
+  theme(legend.key.size = unit( 0.1, 'cm')) +
+  theme(legend.key.height = unit(0.1, 'cm')) +
+  theme(legend.key.width = unit(0.1, 'cm')) +
+  theme(legend.title = element_text(colour = "black", size = 4, face = "bold")) +
+  theme(legend.text = element_text(colour = "black", size = 4)) +
+  theme(legend.box.background = element_rect()) +
+  theme(legend.box.margin = margin(10, 10, 10, 10)) +
+  theme(legend.box.just = "left") +
+  theme( axis.text.x = element_text(size = 6)) +
+  theme(axis.line.y = element_line(linewidth = 0.25)) +
+  scale_x_discrete(labels = wrap_format(50)) +
+  scale_y_continuous(n.breaks = 10) +
+  theme(axis.text.y = element_text(size = 6)) +
+  xlab("Species") +
+  ylab("Count") +
+  labs(title = str_wrap("Bin Quality of Mycobacterium Reads", width = 30)) +
+  ggeasy::easy_center_title() +
+  coord_flip() 
+```
+Now we can see that both high quality reads are not able to be identified as a particular pathogenic species. However, this does not necessarily mean that these are non-pathogenic species. For this reason, the regions where these were found should be flagged for further study.
+
+
+```{r}
+
+quality <- 
+  actino_myco %>% 
+  filter(Genus == "Mycobacterium") %>% 
+  select(c(`Site`, `Sample Name`, `Subplot`, `Date`, `Bin Quality`)) %>% 
+  filter(`Bin Quality` == "HQ")
+
+datatable(quality)
+```
+
+Both high-quality unidentified reads are found from the same subplot in Watershed, Alaska. To ensure safeguards and early detection of possible pathogenic sources, more samples should be gathered from this location for increased sequencing depth.
+
+
+
+
+
+# James Materials 
+
+## General Visualization of Actinomycetota 
+
+In this section, we will continue our analysis into the general characteristics and visualization of Actinomycetota bacteria, both in all of the NEON sites, as well as honed in on our specific site. We will put particular emphasis on analyzing the specific class and order of bacteria found at the different sites, some of their observed patterns, and interesting information about them.
+
+Below, we take another look at the sub-taxonomy of Actinomycetota into classes, and colored by site:
+
+
+```{r, fig.width = 13, fig.height = 5}
+NEON_MAGs %>%
+  filter(Phylum == "Actinomycetota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Class)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinomycetota, Class (Colored by Site)", x = "Class", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+Here we can see a few very interesting findings in the data. Firstly, Actnomycetota metagenomes appear in five different classes: Thermoleophilia, Actinomycetia, Acidimicrobiia, Rubrobacteria, and the elusive unnamed UBA4738. Particularly interesting is the relative scarcity of the Rubrobacteria class across all the NEON sites. Rubrobacteria is known as a thermophile, able to thrive in very high temperature environments (even above 70 degrees Celsius) [@noauthor_desulfuromusa_nodate], which could possibly explain their relative lack of abundance in the NEON data. We can look out for these extremophile characteristics of Rubrobacteria, as well as Thermoleophilia, in subsequent analyses.
+
+
+
+
+We can also see a further taxonomic breakdown into bacterial Orders colored by site below:
+
+
+```{r, fig.width = 13, fig.height = 5}
+NEON_MAGs %>%
+  filter(Phylum == "Actinomycetota") %>%
+  filter(Site != "NEON combined assembly") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Order)), fill = Site)) +
+    geom_bar() +
+    labs(title = "Sub Taxonomy of Actinomycetota, Order (Colored by Site)", x = "Order", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+
+Below, we will begin our analysis into the NEON chemistry characteristics of the Actinomycetota MAGs at the sites, to get a better understanding of the conditions that the bacteria live and thrive in, as well as to find some intersting patterns in the data.
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+  filter(`Site ID.x` != "NA") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(`Site ID.x`)), fill = nlcdClass)) +
+  labs(title = "Abundance of Actinomycetota by Site, Colored by nlcdClass", x = "Site ID", y = "Number of MAGs") +
+  geom_bar() +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5), legend.position = "bottom") 
+
+```
+
+In the data set above, we color the abundance of Actinomycetota, labeled by class, by the nlcdClass, or environmental subtype. We can see that Actinomycetota are found in a variety of different environments, with the most abundant source of Actinomycetota, National Grasslands LBJ, being primarily a deciduous forest. We can see from the nclcd classes that, although there are many different ones, they have similar named characteristics, and are all a type of forest, scrub, or grassland.
+
+
+Below we provide another visualization of the abundance of Actinomycetota at all the NEON sites. Immediately apparent is the enormous size of the phylum, making up more than 1/3 of all the NEON MAGs discoverd across all the NEON sites.
+
+```{r, fig.width = 12, fig.height = 12}
+ggtree(tree_bac, layout="circular", branch.length="none") +
+    geom_hilight(node=1789, fill="darkviolet", alpha=.6) +
+    geom_cladelab(node=1789, label="Actinomycetota", align=TRUE,  
+                  offset = .5, textcolor='darkviolet', fontsize = 8)
+```
+## Phylogenetic Analysis of Actinomycetota at All Sites
+
+Now, we will zoom in on Actinomycetota, analyzing the trees and digging into the class phylogenetics at all NEON sites: 
+
+
+```{r}
+tree_bac_node_Actinomycetota <- Preorder(tree_bac)
+tree_Actinomycetota <- Subtree(tree_bac_node_Actinomycetota, 1789)
+tree_bac1 <- tree_bac
+tree_bac_node_Thermoleophilia <- Preorder(tree_bac1)
+tree_Thermoleophilia <- Subtree(tree_bac_node_Thermoleophilia, 2166)
+```
+
+
+```{r, fig.width = 12, fig.height = 12}
+ggtree(tree_Actinomycetota, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry + 
+  xlim(0,25) +
+  geom_point(mapping=aes(color=Class, shape = `Assembly Type`)) +
+  theme(legend.text = element_text(size = 12))
+```
+
+Here, we can see a circular tree view of the Actinommycetota phylum, with the nodes colored by the classes we had discussed earlier. In this view, we can see that although there are 5 classes of Actinomycetota found at all sites, there are still a vast array of phylogenetic branches. By visualizing the tree, we can determine where exactly two phylogentic examples of Actinomycetota from each class diverged.
+
+In this view, we can fully appreciate the relatively low abundance of Rubrobacteiria at the sites, seeing its complete divergence from the 4 other classes early in the tree's structure.
+
+Below we can see another view of the Class phylogeny of Actinomycetota in a circular tree: 
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(!is.na(Class))
+
+
+MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_Actino$label
+
+tree_bac_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Class))
+```
+
+
+To get more information from this tree, we can also color the nodes by Ecosystem subtype, emphasizing the abundacne of Actinomycetota in grasslands, shrublands, and forests. However, there are some examples of Tundra, Desert, and Taiga MAGs as well.
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(!is.na(`Ecosystem Subtype`))
+
+
+MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_Actino$label
+
+tree_bac_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=`Ecosystem Subtype`))
+```
+
+## National Grasslands LBJ, and Actinomycetota
+
+Now, lets briefly take a break from analyzing Actinomycetota at all sites, and zoom in on National Grasslands LBJ, or CLBJ. We. will begin, as previously, by assessing the phylogenetic tree.
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ")
+
+NEON_MAGs_metagenomes_chemistry_CLBJ <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria")
+
+
+CLBJ_MAGs_label <- NEON_MAGs_metagenomes_chemistry_CLBJ$label
+
+tree_bac_CLBJ_MAGs <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Phylum))
+```
+```{r, fig.width = 13, fig.height = 5}
+NEON_MAGs %>%
+  filter(Site != "NEON combined assembly") %>% 
+  filter(`Site ID` == "CLBJ") %>% 
+ggplot(aes(x = fct_rev(fct_infreq(Phylum)), fill = Class)) +
+    geom_bar() +
+    labs(title = "Bacteria MAGs at National Grasslands LBJ" , x = "Phylum", y = "Number of MAGs") +
+theme(axis.text.x = element_text(size = 15, angle = 0, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = 1.5))+
+  coord_flip() 
+```
+We can see from the tree and bargraph above that, although a very diverse site, Actinomycetota is the most abundant phylum of bacteria found at CLBJ.
+
+As we did in with the Actinomycetota data set from all the sites, we can zoom in on the phylum at CLBJ only, to provide a phylogenetic analysis: 
+
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Class)) 
+```
+We can see that, from the tree, Thermoleophilia and Actinomycetia are the two most abundant classes of Actinomycetota at CLBJ. Interesting to note is that although there are Rubrobacteria examples in the entire NEON data, none of them are found at CLBJ. However, we still see the elusive Class UBA4738, of which there is very little published information. We can now go further down the phylogenetic tree to assess the Order of the Actinomycetota bacteria found at CLBJ: 
+
+
+
+```{r}
+
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Order)) 
+```
+In the above tree, we can see that there is only a single phylogenetic group of the order Actinomycetales found at CLBJ (shown in brown in the bottom of the tree). This bacterial order is particularly interesting and known for its ability to grow in long branches, similar in look to fungal growth [@daur_boosting_2018].
+
+
+
+
+## Thermoleophilia, an Interesting Class of Actinomycetota
+
+Now, we can delve deeper and focus on a specific class of interesting extremophile bacteria, Thermoleophilia. Thermoleophilia, as we showed in the earlier trees, is one of the most abundant classes of Actinomycetota, both site-wide and at CLBJ specifically. Below, we will assess the phylogenetics of Thermoleophilia: 
+
+```{r}
+ggtree(tree_Thermoleophilia, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry + 
+  xlim(0,25) +
+  geom_point(mapping=aes(color=Order, shape = `Assembly Type`))+
+  theme(legend.text = element_text(size = 12))
+```
+
+
+In the above tree, we get a comprehensive look at the Order of Thermoleophilia found across all NEON sites. Of particular interest is the extreme abundance of Solirubrobacterales, as well as only three divergent branches of the order Miltoncostaeales, which diverged from the order Gaiellales relatively late in the tree structure. Since there is very little published information on this order, it is probable that Miltoncostaeales only very recently was classified into a new order separate to that of Gaiellales. This is a testament to the rapidly changing and evolving field of metagenomics and bacterial phylogenetics. 
+
+We will now perform the same analysis focusing on CLBJ specifically: 
+
+Now zoom in on CLBJ: 
+
+```{r}
+
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Order)) 
+```
+At CLBJ, we only see the two orders Gaiellales and Solirubrobacterales. Now lets assess the families: 
+
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Family)) 
+```
+Another surprising scarcity is discovered; as there is only one phylogenetic branch dedicated to the family Thermoleophilaceae at CLBJ. Furthermore, there is another elusively named phylogeny of the 70-9 family, of which there is very little, if any, published information on. Now, lets zoom in on the Genus of the above examples: 
+
+
+```{r}
+NEON_MAGs_metagenomes_chemistry_CLBJ_Actino <- NEON_MAGs_metagenomes_chemistry %>% 
+  filter(`Site ID.x` == "CLBJ") %>% 
+  filter(Domain == "Bacteria") %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class == "Thermoleophilia")
+
+
+CLBJ_MAGs_Actino_label <- NEON_MAGs_metagenomes_chemistry_CLBJ_Actino$label
+
+tree_bac_CLBJ_MAGs_Actino <-drop.tip(tree_bac,tree_bac$tip.label[-match(CLBJ_MAGs_Actino_label, tree_bac$tip.label)])
+
+ggtree(tree_bac_CLBJ_MAGs_Actino, layout="circular")  %<+%
+  NEON_MAGs_metagenomes_chemistry +
+  geom_point(mapping=aes(color=Genus))
+```
+From this tree we can see that the single branch of the family Thermoleophilaceae is of the genus Conexibacter.
+
+## NEON Chemistry Analysis of Actinomycetota 
+
+We will wrap up our analysis of Actinomycetota NEON MAGs by assessing some patterns in the phylogenes with regards to physical and chemical conditions in the NEON chemistry data.
+
+First, we will assess the effect of soil temperature on the abundance of Actinomycetota at all sites, faceted by class: 
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilTemp, fill=Class )) +
+  labs(title = "Soil Temperatuer of Actinomycetota, Faceted by Class", x = "Soil Temperature", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+  
+```
+
+There are a few intersting findings in this data set. Firstly, we see that the class Acidimicrobiia preferentially is found in colder climates, indicative of the peak in MAG numbers around 10 degrees Celsius. Next, we see that, although not abundant, Rubrobacteria align with its thermophile characteristics with a peak in MAG numbers in the higher range of the temperatures measured. Although not close to the max temperature of thermophiles, it is an interesting finding that follows the expected patterns. Finally, we see that a larger portion of the class UBA4738 is found at higher temperatures, certainly compared to the relative abundance of the classes Thermoleophilia, Actinomycetia, and Acidimicrobiia, which prefer more moderate temperatures in the 10-20 degree Celsius range.
+
+
+Now, we will assess pH differences in the MAGs found in Actinomycetota: 
+
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilInWaterpH, fill=Class )) +
+  labs(title = "Water pH of Actinomycetota, Faceted by Class", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+Here, we can determine that the mysterious class UBA4738, while also preferring higher temperatures, also is more abundant at high pH values as well. This may suggest UBA4738 as a novel thermophile class, however, more data and study into this class is needed to confirm this. 
+
+Let's now compare all the classes of Actinomycetota on one graph and assess the pH differneces: 
+
+```{r, fig.width =10, fig.height =7}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=soilInWaterpH, fill=Class )) +
+  labs(title = "Water pH of Actinomycetota", x = "pH", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 17, hjust = .5), legend.position = "bottom") +
+  annotate("rect", xmin = 5.3, xmax = 9.3, ymin = -.5, ymax = 10.3, 
+           fill = NA, color = "black", size = 1.2)
+```
+Above, we clearly see the preferential finding of UBA4738 in more basic environments, with no examples being found below pH 5, compared to four of the other classes being found in high numbers below this pH value.
+
+
+
+
+Finally, we will take one more NEON chemistry visualization of Actinomycetota at all sites, assessing the effect of elevation. While there arent too many trends to find from this data, we get an idea of the relative abundance of each class at different elevations and different sites, which may be of use in the future as more MAGs are generated.
+
+
+```{r, fig.width =11, fig.height =8}
+NEON_MAGs_metagenomes_chemistry %>% 
+  filter(Phylum == "Actinomycetota") %>% 
+  filter(Class != "NA") %>% 
+ggplot(aes(x=elevation, fill=`Site ID.x` )) +
+  labs(title = "Elevation of Actinomycetota, Faceted by Class", x = "Elevation", y = "Number of MAGs") +
+  geom_histogram(bins = 25) +
+  theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1, vjust = 1),
+                        axis.text.y = element_text(size = 12),
+                        text = element_text(size = 15), plot.title = element_text(size = 15, hjust = .5), legend.position = "bottom") +
+facet_wrap(vars(Class), scales = "free", ncol = 2)
+```
+
+
+
+# Discussion
+
+Using open-sourced high-performance computing techniques, we were able to extract useful information from genomic and metagenomic datasets from the National Ecological Observatory Network. By parsing and visualizing these data, we have demonstrated there's a host of information which is important for ecological, epidemiological, and medicinal purposes. For instance, these data demonstrate that possible pathogenic bacteria can be monitored and traced in a relatively simple manner. We have found that the power of these studies can yield insight into possible outbreaks and be useful for early warning and monitoring, although the sequencing depth could be improved to provide more accurate lower-level taxanomic identification. 
+
+We can also use these data to study the environment and adaptations of organisms in extreme conditions, such as Thermoleophilia. One can compare and contrast identification of organisms such as these with others found in more conventional environments to identify key differences in their prefered ecological niches. This can be important not only for identification and tracking purposes, but could provide useful predictive powers as to how bacteria might adapt to a changing climate where local temperatures and pH might fluctuate. 
+
+# Conclusion
+
+Here, we have demonstrated to usefulness of open, crowd-sourced data analysis of large datasets. Using data gathered from samples collected by scientists in the field, individuals with very little specialized training can utilize platforms such as R to perform analysis of such data which in the past may have taken decades to sift through by individual scientists or small scientific teams. Using crowd sourcing for data analysis can also overcome limitations of an individual's training by having data visualizations generated from an unbiased third party. 
+
+# References
